@@ -51,10 +51,10 @@ void insertNode(Node *&node, Operation data, int key) {
     }
 }
 
-void buildTree(const string &operation, Tree &t) {
+void buildTree(const string &expression, Tree &t) {
     t.root = nullptr;
-    for (int i = 0; operation[i] != '\0'; i++) {
-        auto newOperation = Operation(operation[i]);
+    for (int i = 0; expression[i] != '\0'; i++) {
+        auto newOperation = Operation(expression[i]);
         insertNode(t.root, newOperation, i);
     }
 }
@@ -70,15 +70,15 @@ void inOrder(Node *node) {
     }
 }
 
-// void inOrder(Node *node) {
-//     if (node != nullptr) {
-//         inOrder(node->left);
-//         if (node->data.isOperation)
-//             std::cout << node->data.operation << " ";
-//         else
-//             std::cout << node->data.value << " ";
-//         inOrder(node->right);
-//     }
-// }
+void executeTree(Node *node) {
+    if (node != nullptr) {
+        executeTree(node->left);
+        if (node->data.isOperation)
+            std::cout << node->data.operation << " ";
+        else
+            std::cout << node->data.value << " ";
+        executeTree(node->right);
+    }
+}
 
 #endif  // TREE_HPP
