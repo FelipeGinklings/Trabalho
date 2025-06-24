@@ -2,4 +2,5 @@
 /*.dSYM
 *.pdf
 main
-teste
+tests
+utilsTest
