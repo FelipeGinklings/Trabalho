@@ -25,11 +25,6 @@ struct LinkOperation {
     int left = 0, right = 0;
 };
 
-struct OperationStr {
-    string operation;
-    int position;
-};
-
 void teste() {
     map<int, LinkOperation, greater<int>> levels;
     string teste = "(3+(8+6)/2)+(8*2+(5-(4*3+1)))*((5-(3*3))/3-(7+8)*2)";
@@ -59,6 +54,7 @@ vector<string> separateOperations(const string &expression) {
     vector<string> operations;
     if (expression.length() < 3) return operations;
     bool completed = false;
+    bool lastLvIs2 = false;
     bool half = false;
     for (int i = 0; expression[i] != '\0'; i++) {
         string operation = expression.substr(i, 3);
@@ -82,7 +78,18 @@ vector<string> separateOperations(const string &expression) {
             completed = true;
             i += 2;
         }
-        operations.push_back(operation);
+
+        const size_t opSize = operation.length();
+        if (operation.length() == 2 && opLv2(operation[0])) {
+            size_t opsSize = operations.size() - 1;
+            operations[opsSize] += operation;
+        } else if (opSize == 3 && opLv2(operation[1]) || (lastLvIs2 && opSize == 1)) {
+            operations.insert(operations.begin(), operation);
+            lastLvIs2 = true;
+        } else {
+            operations.push_back(operation);
+            lastLvIs2 = false;
+        }
     }
 
     return operations;
