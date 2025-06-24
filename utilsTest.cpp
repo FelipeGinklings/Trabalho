@@ -154,7 +154,7 @@ int main() {
     testSeparateOperations();
     testAreEqual();
     testIsValidExpression();
-
+    teste();
     cout << "All tests passed!\n";
     return 0;
 }

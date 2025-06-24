@@ -1,4 +1,6 @@
+#include <functional>
 #include <iostream>
+#include <map>
 #include <random>
 #include <string>
 #include <vector>
@@ -9,6 +11,44 @@ using namespace std;
 
 bool opLv1(const char &c) { return c == '-' || c == '+'; }
 bool opLv2(const char &c) { return c == '*' || c == '/'; }
+
+struct Order {
+    string outerParenthesesLevel;
+    string insideParenthesesLevel;
+    string insideParenthesesOrder;
+    string operationOrder;
+    string operationOrderNumber;
+};
+
+struct LinkOperation {
+    string operation;
+    int left = 0, right = 0;
+};
+
+void teste() {
+    map<int, LinkOperation, greater<int>> levels;
+    string teste = "(3+(8+6)/2)+(8*2+(5-(4*3+1)))*((5-(3*3))/3-(7+8)*2)";
+    levels[33121] = {"3*3"};
+    levels[32211] = {"7+8"};
+    levels[32111] = {"5-", 0, 33121};
+    levels[31122] = {"/3", 32111};
+    levels[31121] = {"*2", 32211};
+    levels[31111] = {"-", 31122, 31121};
+    levels[23121] = {"4*3"};
+    levels[23111] = {"+1", 23121};
+    levels[22111] = {"5-", 0, 23111};
+    levels[21121] = {"8*2"};
+    levels[21111] = {"+", 21121, 22111};
+    levels[12111] = {"8+6"};
+    levels[11121] = {"/2", 12111};
+    levels[11111] = {"3+", 0, 11121};
+    levels[223] = {"*", 11111, 21111};
+    levels[112] = {"+", 212, 21110};
+
+    for (const auto &[key, value] : levels) {
+        cout << "Key: " << key << " Operation: " << value.operation << " Left: " << value.left << " Right: " << value.right << endl;
+    }
+}
 
 vector<string> separateOperations(const string &expression) {
     vector<string> operations;
