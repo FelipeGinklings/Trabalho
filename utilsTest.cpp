@@ -148,13 +148,14 @@ void testIsValidExpression() {
 }
 
 int main() {
-    testOpLv1();
-    testOpLv2();
-    testGenerateExpression();
-    testSeparateOperations();
-    testAreEqual();
-    testIsValidExpression();
-    teste();
-    cout << "All tests passed!\n";
+    // testOpLv1();
+    // testOpLv2();
+    // testGenerateExpression();
+    // testSeparateOperations();
+    // testAreEqual();
+    // testIsValidExpression();
+    // cout << "All tests passed!\n" << endl;
+    string genString = "9/5+8/2+3+1/1*7+3*7/6+4+6-7+1*7*2*6*6*8*";
+    auto operation = separateOperations(genString);
     return 0;
 }
