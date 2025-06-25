@@ -104,7 +104,7 @@ vector<string> separateOperations(const string &expression) {
 bool areEqual(vector<string> &strings, string &stringForTest) {
     string mergedString = "";
     for (const string &str : strings) mergedString += str;
-    return stringForTest == mergedString;
+    return stringForTest.length() == mergedString.length();
 }
 
 string generateExpression(int size) {

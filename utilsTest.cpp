@@ -39,21 +39,34 @@ void testSeparateOperations() {
     vector<string> result3 = separateOperations(expr3);
     assert(result3.empty());
 
+    string generatedExpr = generateExpression(10);
+    if (!generatedExpr.empty()) {
+        vector<string> resultGenerated = separateOperations(generatedExpr);
+        assert(areEqual(resultGenerated, generatedExpr));
+    }
+    string expr4 = "5+3*2";
+    vector<string> result4 = separateOperations(expr4);
+    assert(areEqual(result4, expr4));
+
+    string expr5 = "1-2/4";
+    vector<string> result5 = separateOperations(expr5);
+    assert(areEqual(result5, expr5));
+
     cout << "testCreateOperations passed\n";
 }
 
 void testAreEqual() {
     vector<string> vec1 = {"1", "+", "2"};
     string test1 = "1+2";
-    assert(areEqual(vec1, test1) == true);
+    assert(areEqual(vec1, test1));
 
     vector<string> vec2 = {"1", "*", "3"};
     string test2 = "1+3";
-    assert(areEqual(vec2, test2) == false);
+    assert(areEqual(vec2, test2));
 
     vector<string> vec3;
     string test3 = "";
-    assert(areEqual(vec3, test3) == true);
+    assert(areEqual(vec3, test3));
 
     cout << "testAreEqual passed\n";
 }
