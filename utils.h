@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "circularChainedList.hpp"
 #include "pilha.h"
 
 using namespace std;
@@ -51,11 +52,13 @@ void teste() {
 }
 
 vector<string> separateOperations(const string &expression) {
-    vector<string> operations;
-    if (expression.length() < 3) return operations;
+    CircularLinkedList<string> operations{};
+    if (expression.length() < 3) return {};
     bool completed = false;
     bool lastLvIs2 = false;
     bool half = false;
+    NodeC<string> *lastNode = nullptr;
+
     for (int i = 0; expression[i] != '\0'; i++) {
         string operation = expression.substr(i, 3);
         int rest = expression.length() - i;
@@ -80,19 +83,22 @@ vector<string> separateOperations(const string &expression) {
         }
 
         const size_t opSize = operation.length();
-        if (operation.length() == 2 && opLv2(operation[0])) {
-            size_t opsSize = operations.size() - 1;
-            operations[opsSize] += operation;
+        if (opSize == 2 && opLv2(operation[0]) && lastNode) {
+            lastNode->data += operation;
+            lastNode = nullptr;
         } else if (opSize == 3 && opLv2(operation[1]) || (lastLvIs2 && opSize == 1)) {
-            operations.insert(operations.begin(), operation);
+            operations.pushFront(operation);
+            if (opSize == 3 && opLv2(operations.start->data[1])) lastNode = operations.start;
             lastLvIs2 = true;
         } else {
-            operations.push_back(operation);
+            operations.pushBack(operation);
             lastLvIs2 = false;
         }
     }
 
-    return operations;
+    auto converted = operations.convertToVector();
+
+    return converted;
 }
 
 bool areEqual(vector<string> &strings, string &stringForTest) {

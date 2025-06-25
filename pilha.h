@@ -2,14 +2,14 @@
 #define STACK_HPP
 
 template <typename TYPE>
-struct Item {
+struct Node {
     TYPE data;
-    Item<TYPE> *next;
+    Node<TYPE> *next;
 };
 
 template <typename TYPE>
 struct Stack {
-    Item<TYPE> *first;
+    Node<TYPE> *first;
 };
 
 template <typename TYPE>
@@ -19,7 +19,7 @@ void initializeStack(Stack<TYPE> &s) {
 
 template <typename TYPE>
 void addToTopStack(Stack<TYPE> &s, TYPE data) {
-    auto newItem = new Item<TYPE>;
+    auto newItem = new Node<TYPE>;
     newItem->data = data;
     newItem->next = s.first;
     s.first = newItem;

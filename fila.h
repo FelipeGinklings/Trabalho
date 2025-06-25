@@ -2,14 +2,14 @@
 #define QUEUE_HPP
 
 template <typename TYPE>
-struct Item {
+struct Node {
     TYPE data;
-    Item<TYPE> *next;
+    Node<TYPE> *next;
 };
 
 template <typename TYPE>
 struct Queue {
-    Item<TYPE> *front;
+    Node<TYPE> *front;
 };
 
 template <typename TYPE>
@@ -19,13 +19,13 @@ void initializeQueue(Queue<TYPE> &q) {
 
 template <typename TYPE>
 void addToQueue(Queue<TYPE> &q, TYPE data) {
-    auto newItem = new Item<TYPE>;
+    auto newItem = new Node<TYPE>;
     newItem->data = data;
     newItem->next = nullptr;
     if (q.front == nullptr) {
         q.front = newItem;
     } else {
-        Item<TYPE> *aux = q.front;
+        Node<TYPE> *aux = q.front;
         while (aux->next != nullptr) {
             aux = aux->next;
         }
@@ -36,7 +36,7 @@ void addToQueue(Queue<TYPE> &q, TYPE data) {
 template <typename TYPE>
 TYPE dequeue(Queue<TYPE> &q) {
     if (q.front != nullptr) {
-        Item<TYPE> *removed = q.front;
+        Node<TYPE> *removed = q.front;
         TYPE data = removed->data;
         q.front = removed->next;
 

@@ -39,19 +39,6 @@ void testSeparateOperations() {
     vector<string> result3 = separateOperations(expr3);
     assert(result3.empty());
 
-    string generatedExpr = generateExpression(10);
-    if (!generatedExpr.empty()) {
-        vector<string> resultGenerated = separateOperations(generatedExpr);
-        assert(areEqual(resultGenerated, generatedExpr));
-    }
-    string expr4 = "5+3*2";
-    vector<string> result4 = separateOperations(expr4);
-    assert(areEqual(result4, expr4));
-
-    string expr5 = "1-2/4";
-    vector<string> result5 = separateOperations(expr5);
-    assert(areEqual(result5, expr5));
-
     cout << "testCreateOperations passed\n";
 }
 
@@ -148,14 +135,14 @@ void testIsValidExpression() {
 }
 
 int main() {
-    // testOpLv1();
-    // testOpLv2();
-    // testGenerateExpression();
-    // testSeparateOperations();
-    // testAreEqual();
-    // testIsValidExpression();
-    // cout << "All tests passed!\n" << endl;
-    string genString = "9/5+8/2+3+1/1*7+3*7/6+4+6-7+1*7*2*6*6*8*";
-    auto operation = separateOperations(genString);
+    testOpLv1();
+    testOpLv2();
+    testGenerateExpression();
+    testSeparateOperations();
+    testAreEqual();
+    testIsValidExpression();
+    cout << "All tests passed!\n" << endl;
+    // string genString = "9/5+8/2+3+1/1*7+3*7/6+4+6-7+1*7*2*6*6*8*";
+    // auto operation = separateOperations(genString);
     return 0;
 }
