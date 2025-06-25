@@ -17,8 +17,8 @@ struct Order {
     string outerParenthesesLevel;
     string insideParenthesesLevel;
     string insideParenthesesOrder;
-    string operationOrder;
-    string operationOrderNumber;
+    // string operationOrder;
+    // string operationOrderNumber;
 };
 
 struct LinkOperation {
@@ -51,8 +51,29 @@ void teste() {
     }
 }
 
-vector<string> separateOperations(const string &expression) {
+string endInOperation(string &expression) {
+    const char firstChar = expression[0];
+    const char lastChar = expression[expression.length() - 1];
+    string operations = "";
+    if (opLv1(firstChar) || opLv2(firstChar)) {
+        expression = expression.substr(1, expression.size() - 1);
+        operations += string(1, firstChar);
+    }
+    if (opLv1(lastChar) || opLv2(lastChar)) {
+        expression.pop_back();
+        operations += string(1, lastChar);
+    }
+    return operations;
+}
+
+struct SeparateOperationsResult {
+    vector<string> converted;
+    int firstLv1;
+};
+
+SeparateOperationsResult separateOperations(const string &expression) {
     CircularLinkedList<string> operations{};
+    int firstLv1 = -1;
     if (expression.length() < 3) return {};
     bool completed = false;
     bool lastLvIs2 = false;
@@ -90,15 +111,17 @@ vector<string> separateOperations(const string &expression) {
             operations.pushFront(operation);
             if (opSize == 3 && opLv2(operations.start->data[1])) lastNode = operations.start;
             lastLvIs2 = true;
+            if (firstLv1 != -1) firstLv1++;
         } else {
             operations.pushBack(operation);
+            if (firstLv1 == -1) firstLv1 = operations.size - 1;
             lastLvIs2 = false;
         }
     }
 
     auto converted = operations.convertToVector();
 
-    return converted;
+    return {converted, firstLv1};
 }
 
 bool areEqual(vector<string> &strings, string &stringForTest) {

@@ -25,32 +25,61 @@ void testOpLv2() {
     cout << "testOpLv2 passed\n";
 }
 
+void testEndInOperation() {
+    string expr1 = "1+2+";
+    string result1 = endInOperation(expr1);
+    assert(result1 == "+");
+    assert(expr1 == "1+2");
+
+    string expr2 = "3*4*";
+    string result2 = endInOperation(expr2);
+    assert(result2 == "*");
+    assert(expr2 == "3*4");
+
+    string expr3 = "5-6/";
+    string result3 = endInOperation(expr3);
+    assert(result3 == "/");
+    assert(expr3 == "5-6");
+
+    string expr4 = "7+8";
+    string result4 = endInOperation(expr4);
+    assert(result4 == "");
+    assert(expr4 == "7+8");
+
+    string expr5 = "9";
+    string result5 = endInOperation(expr5);
+    assert(result5 == "");
+    assert(expr5 == "9");
+
+    cout << "testEndInOperation passed\n";
+}
+
 void testSeparateOperations() {
     // Basic tests first
     string expr1 = "1+2";
-    vector<string> result1 = separateOperations(expr1);
-    assert(result1.size() > 0);
+    auto [result1, firstLv1_1] = separateOperations(expr1);
+    assert(result1.size() > 0 && firstLv1_1 != -1);
 
     string expr2 = "1*2+3";
-    vector<string> result2 = separateOperations(expr2);
-    assert(result2.size() > 0);
+    auto [result2, firstLv1_2] = separateOperations(expr2);
+    assert(result2.size() > 0 && firstLv1_2 != -1);
 
     string expr3 = "";
-    vector<string> result3 = separateOperations(expr3);
+    auto [result3, firstLv1_3] = separateOperations(expr3);
     assert(result3.empty());
 
     string generatedExpr = generateExpression(10);
     if (!generatedExpr.empty()) {
-        vector<string> resultGenerated = separateOperations(generatedExpr);
+        auto [resultGenerated, firstLv1_gen] = separateOperations(generatedExpr);
         assert(areEqual(resultGenerated, generatedExpr));
     }
     string expr4 = "5+3*2";
-    vector<string> result4 = separateOperations(expr4);
-    assert(areEqual(result4, expr4));
+    auto [result4, firstLv1_4] = separateOperations(expr4);
+    assert(areEqual(result4, expr4) && firstLv1_4 != -1);
 
     string expr5 = "1-2/4";
-    vector<string> result5 = separateOperations(expr5);
-    assert(areEqual(result5, expr5));
+    auto [result5, firstLv1_5] = separateOperations(expr5);
+    assert(areEqual(result5, expr5) && firstLv1_5 != -1);
 
     cout << "testCreateOperations passed\n";
 }
@@ -150,12 +179,11 @@ void testIsValidExpression() {
 int main() {
     testOpLv1();
     testOpLv2();
+    testEndInOperation();
     testGenerateExpression();
     testSeparateOperations();
     testAreEqual();
     testIsValidExpression();
     cout << "All tests passed!\n" << endl;
-    // string genString = "9/5+8/2+3+1/1*7+3*7/6+4+6-7+1*7*2*6*6*8*";
-    // auto operation = separateOperations(genString);
     return 0;
 }
