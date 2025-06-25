@@ -3,7 +3,8 @@
 
 #include <iostream>
 
-#include "fila.h"
+#include "utils.h"
+
 using namespace std;
 
 struct Operation {
@@ -11,7 +12,6 @@ struct Operation {
     char operation;
     bool isOperation;
     int level;
-
     Operation() {};
     Operation(char newValue, int level) : operation(newValue), level(level) {
         if (newValue == '*' || newValue == '/' || newValue == '-' || newValue == '+') {
@@ -24,18 +24,21 @@ struct Operation {
     };
 };
 
-struct Node {
+template <typename TYPE>
+struct NodeT {
     int key;
-    Operation data;
-    Node *left, *right;
+    TYPE data;
+    NodeT *left, *right;
 };
 
+template <typename TYPE>
 struct Tree {
-    Node *root;
+    NodeT<TYPE> *root;
 };
 
-Node *createNode(Operation data, int key) {
-    auto node = new Node;
+template <typename TYPE>
+NodeT<TYPE> *createNode(TYPE data, int key) {
+    auto node = new NodeT;
     node->data = data;
     node->key = key;
     node->left = nullptr;
@@ -43,49 +46,49 @@ Node *createNode(Operation data, int key) {
     return node;
 }
 
-Queue<bool> insertNode(Node *&node, Operation data, int key, Queue<bool> navigation, int &counter) {}
-
-void buildTree(const string &expression, Tree &t) {
-    t.root = nullptr;
-    int level = 0;
-    Queue<bool> navigation{};
-    initializeQueue(navigation);
-    auto isOperation = [](const char &c) -> bool { return c == '*' || c == '/' || c == '-' || c == '+'; };
-    int counter = 0;
-
-    for (int i = 0; expression[i] != '\0'; i++) {
-        const char &newChar = expression[i];
-        if (newChar == '(') level++;
-        if (newChar == ')') level--;
-        if (newChar == '(' || newChar == ')') continue;
-        auto newOperation = Operation(expression[i], level);
-        const int newKey = (level + 1) * (isOperation ? newChar + 15 : newChar) + i;
-        navigation = insertNode(t.root, newOperation, newKey, navigation, counter);
+template <typename TYPE = char>
+Tree<TYPE> createMiniTree(const string &miniExpress, int key, Tree<TYPE> &t = {}) {
+    t.root = createNode(miniExpress[0], key);
+    t.root->left = nullptr;
+    t.root->right = nullptr;
+    if (miniExpress.length() > 1) t.root->data = miniExpress[1];
+    switch (miniExpress.length()) {
+        case 2:
+            t.root->data = miniExpress[1];
+            t.root->left = createNode(miniExpress[0], key - 1);
+            break;
+        case 3:
+            t.root->left = createNode(miniExpress[0], key - 1);
+            t.root->right = createNode(miniExpress[2], key + 1);
+            break;
+        case 5:
+            t.root->left = createNode(miniExpress[0], key - 1);
+            t.root->right = createMiniTree(miniExpress.substr(2, 3), key + 3).root;
+            break;
+        default:
+            std::cout << "A error has occurred, length is not 1, 2, 3 or 5!" << std::endl;
+            break;
     }
+
+    return t;
 }
 
-void inOrder(Node *node) {
+template <typename TYPE>
+void initializeTree(const string &expression, Tree<TYPE> &t) {}
+
+template <typename TYPE>
+void executeTree(Tree<TYPE> &t) {}
+
+template <typename TYPE>
+void inOrder(NodeT<TYPE> *node) {
     if (node == nullptr) return;
     inOrder(node->left);
-    if (node->data.isOperation)
-        std::cout << node->data.operation << " ";
-    else
-        std::cout << node->data.value << " ";
+    std::cout << node->data << " ";
     inOrder(node->right);
 }
 
-Node *executeTree(Node *node) {
-    if (node == nullptr) return node;
-    executeTree(node->left);
-    if (node->data.isOperation)
-        std::cout << node->data.operation << " ";
-    else
-        std::cout << node->data.value << " ";
-    executeTree(node->right);
-    return node;
-}
-
-void printTree(Node *node, const string &prefix = "", bool isLeft = true) {
+template <typename TYPE>
+void printTree(NodeT<TYPE> *node, const string &prefix = "", bool isLeft = true) {
     if (node == nullptr) return;
 
     // Print current node

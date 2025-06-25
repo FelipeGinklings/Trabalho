@@ -1,6 +1,6 @@
 #include <iostream>
 
-// #include "arvore.h"
+#include "arvore.h"
 
 using namespace std;
 
