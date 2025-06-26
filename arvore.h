@@ -89,16 +89,11 @@ Tree<string> createMiniTree(string miniExpress, int key) {
     return miniTree;
 }
 
-Tree<string> createSubTree(vector<string> &expressionsList, int key, int firsLv1Index) {
-    const string first = expressionsList[0];
+string extractFinalOperation(vector<string> &expressionsList, int firsLv1Index, bool operationIn, bool operationOut, bool operationInMiddle) {
+    string finalOperation;
     int exListLen = expressionsList.size();
     const string last = expressionsList[exListLen - 1];
 
-    bool operationIn = first.length() == 1;
-    bool operationOut = last.length() == 1 || (last.length() == 2 && (opLv1(last[0]) || opLv1(last[1])));
-    bool operationInMiddle = firsLv1Index != -1 && !operationIn && !operationOut;
-
-    string finalOperation;
     if (firsLv1Index <= 0 || firsLv1Index == exListLen - 1) {
     } else if (operationIn)
         finalOperation = expressionsList[0];
@@ -116,6 +111,20 @@ Tree<string> createSubTree(vector<string> &expressionsList, int key, int firsLv1
         expressionsList[firsLv1Index] = expressionsList[firsLv1Index].substr(1, 1);
     }
 
+    return finalOperation;
+}
+
+Tree<string> createSubTree(vector<string> &expressionsList, int key, int firsLv1Index) {
+    const string first = expressionsList[0];
+    int exListLen = expressionsList.size();
+    const string last = expressionsList[exListLen - 1];
+
+    bool operationIn = first.length() == 1;
+    bool operationOut = last.length() == 1 || (last.length() == 2 && (opLv1(last[0]) || opLv1(last[1])));
+    bool operationInMiddle = firsLv1Index != -1 && !operationIn && !operationOut;
+
+    string finalOperation = extractFinalOperation(expressionsList, firsLv1Index, operationIn, operationOut, operationInMiddle);
+
     vector<NodeT<string> *> trees;
     Tree<string> mainSubTree;
     initializeTree(mainSubTree);
@@ -132,9 +141,9 @@ Tree<string> createSubTree(vector<string> &expressionsList, int key, int firsLv1
     for (int index = operationIn; firsLv1Index >= 0 ? (index < firsLv1Index && firsLv1Index) : (index < exListLen); index++) {
         NodeT<string> *recentNode = trees[index];
         if (expressionsList[index].length() == 1) {
-            recentNode->left = subTreeLv2.root;
+            recentNode->right = subTreeLv2.root;
             index++;
-            recentNode->right = trees[index];
+            recentNode->left = trees[index];
         }
         subTreeLv2.root = recentNode;
     }
@@ -215,7 +224,7 @@ template <typename TYPE>
 void inOrder(NodeT<TYPE> *node) {
     if (node == nullptr) return;
     inOrder(node->left);
-    std::cout << node->data << " ";
+    std::cout << node->data;
     inOrder(node->right);
 }
 

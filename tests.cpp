@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "utils.h"
+#include "arvore.h"
 
 using namespace std;
 
@@ -176,6 +176,24 @@ void testIsValidExpression() {
     cout << "testIsValidExpression passed\n";
 }
 
+void createSimpleExpressionTree() {
+    // for (int i = 2; i <= 30; i++) {
+    // for (int j = 0; j < 10; j++) {
+    // string genString = generateExpression(10);
+    string genString = "8*9-9/1+4+2-4*8*9-8";
+    string hasOperation = endInOperation(genString);
+    auto [operations, firstLv1] = separateOperations(genString);
+    auto newSubTree = createSubTree(operations, 0, firstLv1);
+    cout << "genString: " << genString << endl;
+    cout << "inOrder:   ";
+    inOrder(newSubTree);
+    cout << endl;
+    printTree(newSubTree);
+    cout << endl << endl;
+    // }
+    // }
+}
+
 int main() {
     testOpLv1();
     testOpLv2();
@@ -184,6 +202,7 @@ int main() {
     testSeparateOperations();
     testAreEqual();
     testIsValidExpression();
+    createSimpleExpressionTree();
     cout << "All tests passed!\n" << endl;
     return 0;
 }
