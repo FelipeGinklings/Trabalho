@@ -73,7 +73,7 @@ def createMiniExpression(
     return MiniExpression(first, operation, second), newMatch
 
 
-def createMiniExpressionsLv2(mulStr: str):
+def createMiniExpressionsLv2(mulStr: str) -> list[MiniExpression] | None:
     if not mulStr.__len__():
         return
     miniExpressionsList: list[MiniExpression] = []
@@ -99,8 +99,10 @@ def createMiniExpressionsLv2(mulStr: str):
 
     assert mulStr == result, f"Esperado: {mulStr}, mas obteve: {result}"
 
+    return miniExpressionsList
 
-def createMiniExpressionsLv1(sumsStr: str):
+
+def createMiniExpressionsLv1(sumsStr: str) -> list[MiniExpression] | None:
     if not sumsStr.__len__():
         return
     miniExpressionsList: list[MiniExpression] = []
@@ -127,6 +129,8 @@ def createMiniExpressionsLv1(sumsStr: str):
         result += miniExpression.__str__()
     assert sumsStr == result, f"Esperado: {sumsStr}, mas obteve: {result}"
 
+    return miniExpressionsList
+
 
 def generateExpression(size: int) -> str:
     if size <= 0:
@@ -139,27 +143,38 @@ def generateExpression(size: int) -> str:
     return expression
 
 
+def evaluateExpression(
+    size: int,
+) -> tuple[list[MiniExpression], list[MiniExpression]] | list[MiniExpression] | None:
+    string = generateExpression(size)
+    mulStr, sumsStr, operation = organizeExpression(string)
+    evalResultMul = 0
+    evalResultSum = 0
+    if mulStr.__len__():
+        evalResultMul: float = eval(mulStr)
+    if sumsStr.__len__():
+        evalResultSum: float = eval(operation + sumsStr)
+    evalResult = 0
+    evalResult = evalResultMul + evalResultSum
+    evalString: float = round(eval(string), 1)
+    resultEval = round(evalResult - evalString, 1)
+    assert (
+        resultEval == 0
+    ), f"Esperado: 0, mas obteve: {resultEval} a string era {string} a nova string virou {mulStr+operation+sumsStr}"
+    print(operation)
+    listLv1 = createMiniExpressionsLv1(sumsStr)
+    listLv2 = createMiniExpressionsLv2(mulStr)
+
+    if listLv1 and listLv2:
+        return listLv1, listLv2
+    elif listLv1:
+        return listLv1
+    elif listLv2:
+        return listLv2
+    return
+
+
 if __name__ == "__main__":
     for size in range(2, 30):
         for _ in range(1, 100):
-            string = generateExpression(size)
-            # string = "927+64*432*35*625*934*555*462-150-914+75-357-283-50/196*868/654"
-            # string = "854*255-69+968"
-            mulStr, sumsStr, operation = organizeExpression(string)
-            resultString = mulStr + operation + sumsStr
-            evalResultMul = 0
-            evalResultSum = 0
-            if mulStr.__len__():
-                evalResultMul: float = eval(mulStr)
-            if sumsStr.__len__():
-                evalResultSum: float = eval(operation + sumsStr)
-            evalResult = 0
-            evalResult = evalResultMul + evalResultSum
-            evalString: float = round(eval(string), 1)
-            resultEval = round(evalResult - evalString, 1)
-            assert (
-                resultEval == 0
-            ), f"Esperado: 0, mas obteve: {resultEval} a string era {string} a nova string virou {mulStr+operation+sumsStr}"
-            print(operation)
-            createMiniExpressionsLv2(mulStr)
-            createMiniExpressionsLv1(sumsStr)
+            evaluateExpression(size)
