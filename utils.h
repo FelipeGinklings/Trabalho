@@ -13,43 +13,53 @@ using namespace std;
 bool opLv1(const char &c) { return c == '-' || c == '+'; }
 bool opLv2(const char &c) { return c == '*' || c == '/'; }
 
-struct Order {
-    string outerParenthesesLevel;
-    string insideParenthesesLevel;
-    string insideParenthesesOrder;
-    // string operationOrder;
-    // string operationOrderNumber;
-};
+// struct Order {
+//     string outerParenthesesLevel;
+//     string insideParenthesesLevel;
+//     string insideParenthesesOrder;
+//     string operationOrder;
+//     string operationOrderNumber;
+// };
+
+// void teste() {
+//     map<int, LinkOperation, greater<int>> levels;
+//     string teste = "(3+(8+6)/2)+(8*2+(5-(4*3+1)))*((5-(3*3))/3-(7+8)*2)";
+//     levels[33121] = {"3*3"};
+//     levels[32211] = {"7+8"};
+//     levels[32111] = {"5-", 0, 33121};
+//     levels[31122] = {"/3", 32111};
+//     levels[31121] = {"*2", 32211};
+//     levels[31111] = {"-", 31122, 31121};
+//     levels[23121] = {"4*3"};
+//     levels[23111] = {"+1", 23121};
+//     levels[22111] = {"5-", 0, 23111};
+//     levels[21121] = {"8*2"};
+//     levels[21111] = {"+", 21121, 22111};
+//     levels[12111] = {"8+6"};
+//     levels[11121] = {"/2", 12111};
+//     levels[11111] = {"3+", 0, 11121};
+//     levels[223] = {"*", 11111, 21111};
+//     levels[112] = {"+", 212, 21110};
+
+//     for (const auto &[key, value] : levels) {
+//         cout << "Key: " << key << " Operation: " << value.operation << " Left: " << value.left << " Right: " << value.right << endl;
+//     }
+// }
 
 struct LinkOperation {
-    string operation;
-    int left = 0, right = 0;
+    char operation = '\0';
+    string left = "", right = "";
+
+    string extraOperation = "";
+    string extraNumber = "";
+
+    LinkOperation(const string &newLeft, const char &newOperation, const string &newRight) : operation(newOperation), left(newLeft), right(newRight) {}
+    LinkOperation(const string &newLeft, const char &newOperation, const string &newRight, const string &newExtraOperation, const string &newExtraNumber)
+        : operation(newOperation), left(newLeft), right(newRight), extraOperation(newExtraOperation), extraNumber(newExtraNumber) {}
+    LinkOperation(const char &newOperation, const string &newRight) : operation(newOperation), left(0), right(newRight) {}
+    LinkOperation(const string &newLeft, const char &newOperation) : operation(newOperation), left(right), right(0) {}
+    LinkOperation(const char &newOperation) : operation(newOperation), left(0), right(0) {}
 };
-
-void teste() {
-    map<int, LinkOperation, greater<int>> levels;
-    string teste = "(3+(8+6)/2)+(8*2+(5-(4*3+1)))*((5-(3*3))/3-(7+8)*2)";
-    levels[33121] = {"3*3"};
-    levels[32211] = {"7+8"};
-    levels[32111] = {"5-", 0, 33121};
-    levels[31122] = {"/3", 32111};
-    levels[31121] = {"*2", 32211};
-    levels[31111] = {"-", 31122, 31121};
-    levels[23121] = {"4*3"};
-    levels[23111] = {"+1", 23121};
-    levels[22111] = {"5-", 0, 23111};
-    levels[21121] = {"8*2"};
-    levels[21111] = {"+", 21121, 22111};
-    levels[12111] = {"8+6"};
-    levels[11121] = {"/2", 12111};
-    levels[11111] = {"3+", 0, 11121};
-    levels[223] = {"*", 11111, 21111};
-    levels[112] = {"+", 212, 21110};
-
-    for (const auto &[key, value] : levels) {
-        cout << "Key: " << key << " Operation: " << value.operation << " Left: " << value.left << " Right: " << value.right << endl;
-    }
-}
 
 string endInOperation(string &expression) {
     const char firstChar = expression[0];
@@ -66,6 +76,33 @@ string endInOperation(string &expression) {
     return operations;
 }
 
+string nextOperation(const string &expression, int &index, bool &completed) {
+    string operation = expression.substr(index, 3);
+    int rest = expression.length() - index;
+
+    if (rest <= 3 || expression.length() == 3) {
+        operation = expression.substr(index, rest);
+        index += rest - 1;
+    } else if (completed && opLv1(expression[index])) {
+        operation = expression.substr(index, 1);
+        completed = false;
+    } else if (completed && opLv1(expression[index + 2])) {
+        operation = expression.substr(index, 2);
+        index++;
+    } else if (completed) {
+        operation = string(1, expression[index]);
+        completed = false;
+    } else if (opLv1(operation[1]) && opLv2(expression[index + 3])) {
+        operation = expression.substr(index, 2);
+        index++;
+    } else {
+        completed = true;
+        index += 2;
+    }
+
+    return operation;
+}
+
 struct SeparateOperationsResult {
     vector<string> converted;
     int firstLv1;
@@ -73,6 +110,8 @@ struct SeparateOperationsResult {
 
 SeparateOperationsResult separateOperations(const string &expression) {
     CircularLinkedList<string> operations{};
+    string operationsLv1;
+    string operationsLv2;
     int firstLv1 = -1;
     if (expression.length() < 3) return {};
     bool completed = false;
@@ -80,28 +119,8 @@ SeparateOperationsResult separateOperations(const string &expression) {
     bool half = false;
     NodeC<string> *lastNode = nullptr;
 
-    for (int i = 0; expression[i] != '\0'; i++) {
-        string operation = expression.substr(i, 3);
-        int rest = expression.length() - i;
-        if (rest <= 3 || expression.length() == 3) {
-            operation = expression.substr(i, rest);
-            i += rest - 1;
-        } else if (completed && opLv1(expression[i])) {
-            operation = expression.substr(i, 1);
-            completed = false;
-        } else if (completed && opLv1(expression[i + 2])) {
-            operation = expression.substr(i, 2);
-            i++;
-        } else if (completed) {
-            operation = string(1, expression[i]);
-            completed = false;
-        } else if (opLv1(operation[1]) && opLv2(expression[i + 3])) {
-            operation = expression.substr(i, 2);
-            i++;
-        } else {
-            completed = true;
-            i += 2;
-        }
+    for (int index = 0; expression[index] != '\0'; index++) {
+        string operation = nextOperation(expression, index, completed);
 
         const size_t opSize = operation.length();
         if (opSize == 2 && opLv2(operation[0]) && lastNode) {

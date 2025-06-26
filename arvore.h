@@ -114,55 +114,7 @@ string extractFinalOperation(vector<string> &expressionsList, int firsLv1Index, 
     return finalOperation;
 }
 
-Tree<string> createSubTree(vector<string> &expressionsList, int key, int firsLv1Index) {
-    const string first = expressionsList[0];
-    int exListLen = expressionsList.size();
-    const string last = expressionsList[exListLen - 1];
-
-    bool operationIn = first.length() == 1;
-    bool operationOut = last.length() == 1 || (last.length() == 2 && (opLv1(last[0]) || opLv1(last[1])));
-    bool operationInMiddle = firsLv1Index != -1 && !operationIn && !operationOut;
-
-    string finalOperation = extractFinalOperation(expressionsList, firsLv1Index, operationIn, operationOut, operationInMiddle);
-
-    vector<NodeT<string> *> trees;
-    Tree<string> mainSubTree;
-    initializeTree(mainSubTree);
-    Tree<string> subTreeLv1;
-    initializeTree(subTreeLv1);
-    Tree<string> subTreeLv2;
-    initializeTree(subTreeLv2);
-
-    for (int index = 0; firsLv1Index >= 0 ? (index < firsLv1Index && firsLv1Index) : (index < exListLen); index++) {
-        int newKey = (index + 1) * -5 + key;
-        trees.push_back(createMiniTree(expressionsList[index], newKey).root);
-    }
-
-    for (int index = operationIn; firsLv1Index >= 0 ? (index < firsLv1Index && firsLv1Index) : (index < exListLen); index++) {
-        NodeT<string> *recentNode = trees[index];
-        if (expressionsList[index].length() == 1) {
-            recentNode->right = subTreeLv2.root;
-            index++;
-            recentNode->left = trees[index];
-        }
-        subTreeLv2.root = recentNode;
-    }
-
-    if (firsLv1Index == -1)
-        return subTreeLv2;
-    else if (firsLv1Index == exListLen - 1) {
-        string operationStr = string(1, last[1]), number = string(1, last[0]);
-        if (opLv1(last[0])) {
-            operationStr = string(1, last[0]);
-            number = string(1, last[1]);
-        }
-        mainSubTree = createMiniTree(operationStr, key);
-        mainSubTree.root->left = subTreeLv2.root;
-        mainSubTree.root->right = createMiniTree(number, 1).root;
-
-        return mainSubTree;
-    }
-
+void createSubTreeLv1(int firsLv1Index, vector<string> &expressionsList, int key, vector<NodeT<string> *> &trees, Tree<string> &subTreeLv1) {
     for (int index = firsLv1Index; index < expressionsList.size(); index++) {
         int newKey = (index - firsLv1Index) * 5 + key;
         trees.push_back(createMiniTree(expressionsList[index], newKey).root);
@@ -202,6 +154,62 @@ Tree<string> createSubTree(vector<string> &expressionsList, int key, int firsLv1
         }
         subTreeLv1.root = recentNode;
     }
+}
+
+void createSubTreeLv2(int firsLv1Index, int exListLen, int key, vector<NodeT<string> *> &trees, vector<string> &expressionsList, bool operationIn, Tree<string> &subTreeLv2) {
+    for (int index = 0; firsLv1Index >= 0 ? (index < firsLv1Index && firsLv1Index) : (index < exListLen); index++) {
+        int newKey = (index + 1) * -5 + key;
+        trees.push_back(createMiniTree(expressionsList[index], newKey).root);
+    }
+
+    for (int index = operationIn; firsLv1Index >= 0 ? (index < firsLv1Index && firsLv1Index) : (index < exListLen); index++) {
+        NodeT<string> *recentNode = trees[index];
+        if (expressionsList[index].length() == 1) {
+            recentNode->right = subTreeLv2.root;
+            index++;
+            recentNode->left = trees[index];
+        }
+        subTreeLv2.root = recentNode;
+    }
+}
+
+Tree<string> createSubTree(vector<string> &expressionsList, int key, int firsLv1Index) {
+    const string first = expressionsList[0];
+    int exListLen = expressionsList.size();
+    const string last = expressionsList[exListLen - 1];
+
+    bool operationIn = first.length() == 1;
+    bool operationOut = last.length() == 1 || (last.length() == 2 && (opLv1(last[0]) || opLv1(last[1])));
+    bool operationInMiddle = firsLv1Index != -1 && !operationIn && !operationOut;
+
+    string finalOperation = extractFinalOperation(expressionsList, firsLv1Index, operationIn, operationOut, operationInMiddle);
+
+    vector<NodeT<string> *> trees;
+    Tree<string> mainSubTree;
+    initializeTree(mainSubTree);
+    Tree<string> subTreeLv1;
+    initializeTree(subTreeLv1);
+    Tree<string> subTreeLv2;
+    initializeTree(subTreeLv2);
+
+    createSubTreeLv2(firsLv1Index, exListLen, key, trees, expressionsList, operationIn, subTreeLv2);
+
+    if (firsLv1Index == -1)
+        return subTreeLv2;
+    else if (firsLv1Index == exListLen - 1) {
+        string operationStr = string(1, last[1]), number = string(1, last[0]);
+        if (opLv1(last[0])) {
+            operationStr = string(1, last[0]);
+            number = string(1, last[1]);
+        }
+        mainSubTree = createMiniTree(operationStr, key);
+        mainSubTree.root->left = subTreeLv2.root;
+        mainSubTree.root->right = createMiniTree(number, 1).root;
+
+        return mainSubTree;
+    }
+
+    createSubTreeLv1(firsLv1Index, expressionsList, key, trees, subTreeLv1);
 
     if (!firsLv1Index) return subTreeLv1;
 
