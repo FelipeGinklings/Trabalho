@@ -13,26 +13,39 @@ class MiniExpression:
     operation2: str = ""
     third: str = ""
 
+    def __str__(self):
+        result = self.first + self.operation + self.second
+        if self.hasExtra:
+            result += self.operation2 + self.third
+        return result
 
-def organizeExpression(string: str) -> tuple[str, str]:
+
+def organizeExpression(string: str) -> tuple[str, str, str]:
     pattern = r"[+-]?\d+(?:[*/][+-]?\d+)+"
     multiplications: list[str] = re.findall(pattern, string)
     if multiplications.__len__() == 0:
-        return "", string
+        return "", string, ""
     sumsStr = string
     for mul in multiplications:
         sumsStr = sumsStr.replace(mul, "")
     multiplicationsStr = "".join(multiplications)
     startWithPlus = multiplicationsStr.startswith("+")
     if sumsStr == "":
-        return multiplicationsStr[(startWithPlus if 1 else 0) :], ""
+        return multiplicationsStr[(startWithPlus if 1 else 0) :], "", ""
     if not (sumsStr.startswith("+") or sumsStr.startswith("-")):
         sumsStr = "+" + sumsStr
-    return multiplicationsStr[(startWithPlus if 1 else 0) :], sumsStr
+    return multiplicationsStr[(startWithPlus if 1 else 0) :], sumsStr[1:], sumsStr[0]
 
 
 def matchToString(match: re.Match[str], string: str) -> str:
     return string[match.start() : match.end()]
+
+
+def addToTheLastOne(first: str, miniExpressionsList: list[MiniExpression]) -> None:
+    lastOperation = miniExpressionsList.pop()
+    miniExpressionsList[-1].operation2 = lastOperation.operation
+    miniExpressionsList[-1].third = first
+    miniExpressionsList[-1].hasExtra = True
 
 
 def createMiniExpression(
@@ -48,55 +61,71 @@ def createMiniExpression(
 ):
     first = matchToString(match, expression)
     if match.end() == expression.__len__():
-        lastOperation = miniExpressionsList.pop()
-        miniExpressionsList[-1].operation2 = lastOperation.operation
-        miniExpressionsList[-1].third = first
-        miniExpressionsList[-1].hasExtra = True
+        addToTheLastOne(first, miniExpressionsList)
         return None, None
     operation = expression[match.end()]
     if operation in "+-":
-        lastOperation = miniExpressionsList.pop()
-        miniExpressionsList[-1].operation2 = lastOperation.operation
-        miniExpressionsList[-1].third = first
-        miniExpressionsList[-1].hasExtra = True
-        return None, match
+        addToTheLastOne(first, miniExpressionsList)
+        miniExpressionsList.append(MiniExpression("", operation))
+        return None, None
     newMatch = next(numbers)
     second = matchToString(newMatch, expression)
     return MiniExpression(first, operation, second), newMatch
 
 
-def createMiniExpressions(mulStr: str, sumsStr: str):
+def createMiniExpressionsLv2(mulStr: str):
+    if not mulStr.__len__():
+        return
     miniExpressionsList: list[MiniExpression] = []
-    numbers = re.finditer(r"-?\d+", mulStr)
-    if mulStr.__len__():
-        for match in numbers:
-            miniExpression, lastMatch = createMiniExpression(
-                match, numbers, mulStr, miniExpressionsList
-            )
-            if miniExpression == None and lastMatch:
-                if mulStr[lastMatch.end()] != "-":
-                    miniExpressionsList.append(
-                        MiniExpression("", mulStr[lastMatch.end()], "")
-                    )
-            elif miniExpression and lastMatch == None:
-                miniExpressionsList.append(miniExpression)
-                break
-            elif miniExpression and lastMatch:
-                miniExpressionsList.append(miniExpression)
-                if lastMatch.end() != mulStr.__len__():
-                    if mulStr[lastMatch.end()] != "-":
-                        miniExpressionsList.append(
-                            MiniExpression("", mulStr[lastMatch.end()], "")
-                        )
-    result = ""
-    for miniExpression in miniExpressionsList:
-        result += (
-            miniExpression.first + miniExpression.operation + miniExpression.second
+    numbers = re.finditer(r"\b\d+\b", mulStr)
+    for match in numbers:
+        miniExpression, lastMatch = createMiniExpression(
+            match, numbers, mulStr, miniExpressionsList
         )
-        if miniExpression.hasExtra:
-            result += miniExpression.operation2 + miniExpression.third
+        if miniExpression == None and lastMatch and mulStr[lastMatch.end()] != "-":
+            miniExpressionsList.append(MiniExpression("", mulStr[lastMatch.end()]))
+        elif miniExpression and lastMatch == None:
+            miniExpressionsList.append(miniExpression)
+            break
+        elif miniExpression and lastMatch:
+            miniExpressionsList.append(miniExpression)
+            if lastMatch.end() != mulStr.__len__():
+                miniExpressionsList.append(MiniExpression("", mulStr[lastMatch.end()]))
+    result = ""
+    if mulStr[0] == "-":
+        result += "-"
+    for miniExpression in miniExpressionsList:
+        result += miniExpression.__str__()
 
     assert mulStr == result, f"Esperado: {mulStr}, mas obteve: {result}"
+
+
+def createMiniExpressionsLv1(sumsStr: str):
+    if not sumsStr.__len__():
+        return
+    miniExpressionsList: list[MiniExpression] = []
+    numbers = re.finditer(r"\b\d+\b", sumsStr)
+    for match in numbers:
+        first = matchToString(match, sumsStr)
+        if match.end() == sumsStr.__len__() and miniExpressionsList.__len__() > 1:
+            miniExpressionsList[-1].second = first
+            miniExpressionsList[-1].hasExtra = True
+            break
+        elif match.end() == sumsStr.__len__():
+            miniExpressionsList.append(MiniExpression(first))
+            break
+        operation = sumsStr[match.end()]
+        match = next(numbers)
+        second = matchToString(match, sumsStr)
+        miniExpressionsList.append(MiniExpression(first, operation, second))
+        if match.end() != sumsStr.__len__():
+            operation = sumsStr[match.end()]
+            miniExpressionsList.append(MiniExpression("", operation))
+
+    result = ""
+    for miniExpression in miniExpressionsList:
+        result += miniExpression.__str__()
+    assert sumsStr == result, f"Esperado: {sumsStr}, mas obteve: {result}"
 
 
 def generateExpression(size: int) -> str:
@@ -111,13 +140,26 @@ def generateExpression(size: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in range(2, 10):
+    for size in range(2, 30):
         for _ in range(1, 100):
             string = generateExpression(size)
-            # string = "461*788/354"
-            mulStr, sumsStr = organizeExpression(string)
-            evalResult: float = round(eval(mulStr + sumsStr), 1)
+            # string = "927+64*432*35*625*934*555*462-150-914+75-357-283-50/196*868/654"
+            # string = "854*255-69+968"
+            mulStr, sumsStr, operation = organizeExpression(string)
+            resultString = mulStr + operation + sumsStr
+            evalResultMul = 0
+            evalResultSum = 0
+            if mulStr.__len__():
+                evalResultMul: float = eval(mulStr)
+            if sumsStr.__len__():
+                evalResultSum: float = eval(operation + sumsStr)
+            evalResult = 0
+            evalResult = evalResultMul + evalResultSum
             evalString: float = round(eval(string), 1)
             resultEval = round(evalResult - evalString, 1)
-            assert resultEval == 0, f"Esperado: 0, mas obteve: {resultEval}"
-            createMiniExpressions(mulStr, sumsStr)
+            assert (
+                resultEval == 0
+            ), f"Esperado: 0, mas obteve: {resultEval} a string era {string} a nova string virou {mulStr+operation+sumsStr}"
+            print(operation)
+            createMiniExpressionsLv2(mulStr)
+            createMiniExpressionsLv1(sumsStr)
