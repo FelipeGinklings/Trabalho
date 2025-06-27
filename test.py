@@ -21,20 +21,46 @@ class MiniExpression:
 
 
 def organizeExpression(string: str) -> tuple[str, str, str]:
-    pattern = r"[+-]?\d+(?:[*/][+-]?\d+)+"
+    pattern = r"[+-]?[\da-zA-Z]+(?:[*/][+-]?[\da-zA-Z]+)+"
     multiplications: list[str] = re.findall(pattern, string)
-    if multiplications.__len__() == 0:
-        return "", string, ""
+    if not multiplications:
+        return "", "", string
+
     sumsStr = string
     for mul in multiplications:
-        sumsStr = sumsStr.replace(mul, "")
+        sumsStr = sumsStr.replace(mul, "", 1)
+
     multiplicationsStr = "".join(multiplications)
     startWithPlus = multiplicationsStr.startswith("+")
+
     if sumsStr == "":
-        return multiplicationsStr[(startWithPlus if 1 else 0) :], "", ""
+        return multiplicationsStr[startWithPlus:], "", ""
+
     if not (sumsStr.startswith("+") or sumsStr.startswith("-")):
         sumsStr = "+" + sumsStr
-    return multiplicationsStr[(startWithPlus if 1 else 0) :], sumsStr[1:], sumsStr[0]
+
+    return multiplicationsStr[startWithPlus:], sumsStr[0], sumsStr[1:]
+
+
+# def organizeExpression(
+#     string: str, withLetters: bool = False, withNumbers: bool = False
+# ) -> tuple[str, str, str]:
+#     pattern = r"[+-]?\d+(?:[*/][+-]?\d+)+"
+#     if withLetters:
+#         pattern = r"[+-]?[a-zA-Z]+(?:[*/][+-]?[a-zA-Z]+)+"
+#     multiplications: list[str] = re.findall(pattern, string)
+#     if multiplications.__len__() == 0:
+#         return "", string, ""
+#     sumsStr = string
+#     for mul in multiplications:
+#         sumsStr = sumsStr.replace(mul, "", 1)
+#     multiplicationsStr = "".join(multiplications)
+#     startWithPlus = multiplicationsStr.startswith("+")
+#     if sumsStr == "":
+#         return multiplicationsStr[(startWithPlus if 1 else 0) :], "", ""
+#     if not (sumsStr.startswith("+") or sumsStr.startswith("-")):
+#         sumsStr = "+" + sumsStr
+#     return multiplicationsStr[(startWithPlus if 1 else 0) :], sumsStr[1:], sumsStr[0]
 
 
 def matchToString(match: re.Match[str], string: str) -> str:
@@ -132,14 +158,64 @@ def createMiniExpressionsLv1(sumsStr: str) -> list[MiniExpression] | None:
     return miniExpressionsList
 
 
-def generateExpression(size: int) -> str:
+def generateExpression(size: int, withParenthesis: bool = False) -> str:
     if size <= 0:
         return ""
     operators = ["+", "-", "*", "/"]
-    expression = str(random.randint(1, 999))
+    expression = str(random.randint(1, 99))
     for _ in range(1, size):
         expression += random.choice(operators)
-        expression += str(random.randint(1, 999))
+        expression += str(random.randint(1, 99))
+
+    if withParenthesis and size >= 3:
+        # Calculate the number of parentheses pairs based on the size
+        num_parentheses = min(
+            size // 2, 3
+        )  # Limit to a reasonable number of parentheses
+        for _ in range(num_parentheses):
+            # Find positions where we can insert opening parenthesis (before numbers)
+            open_positions: list[int] = []
+            close_positions: list[int] = []
+
+            # Find all number positions
+            for i, char in enumerate(expression):
+                if char.isdigit() and (i == 0 or not expression[i - 1].isdigit()):
+                    open_positions.append(i)
+                if char.isdigit() and (
+                    i == len(expression) - 1 or not expression[i + 1].isdigit()
+                ):
+                    close_positions.append(i + 1)
+
+            if len(open_positions) >= 2 and len(close_positions) >= 2:
+                # Choose random positions for parentheses
+                open_pos = random.choice(open_positions[:-1])  # Not the last number
+                close_pos = random.choice(
+                    [pos for pos in close_positions if pos > open_pos + 2]
+                )
+
+                if close_pos:
+                    expression = (
+                        expression[:open_pos]
+                        + "("
+                        + expression[open_pos:close_pos]
+                        + ")"
+                        + expression[close_pos:]
+                    )
+                    # Update the positions after adding parentheses
+                    # This is a simplified approach, in a more robust solution,
+                    # we would need to adjust the positions based on the added parentheses
+                    open_positions = []
+                    close_positions = []
+                    for i, char in enumerate(expression):
+                        if char.isdigit() and (
+                            i == 0 or not expression[i - 1].isdigit()
+                        ):
+                            open_positions.append(i)
+                        if char.isdigit() and (
+                            i == len(expression) - 1 or not expression[i + 1].isdigit()
+                        ):
+                            close_positions.append(i + 1)
+
     return expression
 
 
@@ -147,13 +223,15 @@ def evaluateExpression(
     size: int,
 ) -> tuple[list[MiniExpression], list[MiniExpression]] | list[MiniExpression] | None:
     string = generateExpression(size)
+    if eval(string) > 1e15:
+        return
     mulStr, sumsStr, operation = organizeExpression(string)
     evalResultMul = 0
     evalResultSum = 0
     if mulStr.__len__():
-        evalResultMul: float = eval(mulStr)
+        evalResultMul: float = round(eval(mulStr), 1)
     if sumsStr.__len__():
-        evalResultSum: float = eval(operation + sumsStr)
+        evalResultSum: float = round(eval(operation + sumsStr))
     evalResult = 0
     evalResult = evalResultMul + evalResultSum
     evalString: float = round(eval(string), 1)
@@ -174,7 +252,127 @@ def evaluateExpression(
     return
 
 
+def getNextLetter(letterMultiply: int, nextLetter: str):
+    return chr(ord("A") + (ord(nextLetter) - ord("A") + 1) % 26) * letterMultiply
+
+
+def organizeParenthesis(
+    string: str,
+    dictOfLetter: dict[str, str],
+    lastLetter: str = "A",
+    inside: int = 0,
+    letterMultiply: int = 1,
+) -> tuple[None, None] | tuple[int, str]:
+    if lastLetter == "Z":
+        letterMultiply += 1
+
+    operation = ""
+    nextLetter = lastLetter
+    isInside = inside > 0
+    out = 0
+    newString = ""
+    returnLetter = lastLetter
+    char = ""
+    for index, _ in enumerate(string):
+        if index + out < string.__len__():
+            char = string[index + out]
+        else:
+            if not operation:
+                break
+            first = ""
+            last = ""
+            if operation[0] in "+-*/":
+                first = operation[0]
+                operation = operation[1:]
+            if operation[-1] in "+-*/":
+                last = operation[-1]
+                operation = operation[:-1]
+            mul, op, sums = organizeExpression(operation)
+            dictOfLetter[nextLetter] = mul + op + sums
+            newString += first + nextLetter + last
+            break
+        if char not in "()":
+            operation += char
+        elif isInside and char == "(":
+            nextLetter = getNextLetter(letterMultiply, nextLetter)
+            if string[index + out - 1] in "+-/*":
+                operation = operation + nextLetter
+            inside += 1
+            newOut, returnLetterOut = organizeParenthesis(
+                string[index + 1 + out :], dictOfLetter, nextLetter, inside
+            )
+            if newOut and returnLetterOut:
+                inside -= 1
+                isInside = inside > 0
+                out += newOut
+                returnLetter = returnLetterOut
+
+        elif isInside and char == ")":
+            mul, op, sums = organizeExpression(operation)
+            dictOfLetter[lastLetter] = mul + op + sums
+            return index + out + 1, returnLetter
+        elif not isInside and char == "(" and index and operation.__len__() != 1:
+            first = ""
+            last = ""
+            if operation[0] in "+-*/":
+                first = operation[0]
+                operation = operation[1:]
+            if operation[-1] in "+-*/":
+                last = operation[-1]
+                operation = operation[:-1]
+            mul, op, sums = organizeExpression(operation)
+            dictOfLetter[nextLetter] = mul + op + sums
+            newString += first + nextLetter + last
+            nextLetter = getNextLetter(letterMultiply, nextLetter)
+            inside += 1
+            newOut, returnLetterOut = organizeParenthesis(
+                string[index + out + 1 :], dictOfLetter, nextLetter, inside
+            )
+            newString += nextLetter
+            if returnLetterOut:
+                nextLetter = getNextLetter(letterMultiply, returnLetterOut)
+            operation = ""
+            if newOut:
+                inside -= 1
+                isInside = inside > 0
+                out += newOut
+        elif not index and operation.__len__() != 1:
+            nextLetter = getNextLetter(letterMultiply, nextLetter)
+            newString += nextLetter
+            inside += 1
+            newOut, returnLetterOut = organizeParenthesis(
+                string[index + out + 1 :], dictOfLetter, nextLetter, inside
+            )
+            if returnLetterOut:
+                nextLetter = getNextLetter(letterMultiply, nextLetter)
+            operation = ""
+            if newOut:
+                inside -= 1
+                isInside = inside > 0
+                out += newOut
+        elif operation.__len__() == 1:
+            nextLetter = getNextLetter(letterMultiply, nextLetter)
+            inside += 1
+            newOut, returnLetterOut = organizeParenthesis(
+                string[index + out + 1 :], dictOfLetter, nextLetter, inside
+            )
+            newString += operation + nextLetter
+            if returnLetterOut:
+                nextLetter = getNextLetter(letterMultiply, nextLetter)
+            operation = ""
+            if newOut:
+                inside -= 1
+                isInside = inside > 0
+                out += newOut
+
+    if not isInside:
+        mul, op, sums = organizeExpression(newString)
+        dictOfLetter["string"] = mul + op + sums
+    return None, None
+
+
 if __name__ == "__main__":
-    for size in range(2, 30):
-        for _ in range(1, 100):
-            evaluateExpression(size)
+    string = generateExpression(10, True)
+    dictOfLetters: dict[str, str] = {}
+    organizeParenthesis(string, dictOfLetters)
+    print()

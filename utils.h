@@ -13,52 +13,51 @@ using namespace std;
 bool opLv1(const char &c) { return c == '-' || c == '+'; }
 bool opLv2(const char &c) { return c == '*' || c == '/'; }
 
-// struct Order {
-//     string outerParenthesesLevel;
-//     string insideParenthesesLevel;
-//     string insideParenthesesOrder;
-//     string operationOrder;
-//     string operationOrderNumber;
-// };
-
-// void teste() {
-//     map<int, LinkOperation, greater<int>> levels;
-//     string teste = "(3+(8+6)/2)+(8*2+(5-(4*3+1)))*((5-(3*3))/3-(7+8)*2)";
-//     levels[33121] = {"3*3"};
-//     levels[32211] = {"7+8"};
-//     levels[32111] = {"5-", 0, 33121};
-//     levels[31122] = {"/3", 32111};
-//     levels[31121] = {"*2", 32211};
-//     levels[31111] = {"-", 31122, 31121};
-//     levels[23121] = {"4*3"};
-//     levels[23111] = {"+1", 23121};
-//     levels[22111] = {"5-", 0, 23111};
-//     levels[21121] = {"8*2"};
-//     levels[21111] = {"+", 21121, 22111};
-//     levels[12111] = {"8+6"};
-//     levels[11121] = {"/2", 12111};
-//     levels[11111] = {"3+", 0, 11121};
-//     levels[223] = {"*", 11111, 21111};
-//     levels[112] = {"+", 212, 21110};
-
-//     for (const auto &[key, value] : levels) {
-//         cout << "Key: " << key << " Operation: " << value.operation << " Left: " << value.left << " Right: " << value.right << endl;
-//     }
-// }
+// negative id
+struct Order {
+    int outerParenthesesOrder, insideParenthesesLevel, operationLevel, insideParenthesesOrder;
+};
 
 struct LinkOperation {
+    string operation = "";
+    LinkOperation *left = nullptr, *right = nullptr;
+};
+
+void teste() {
+    map<Order, LinkOperation> levels{};
+    // string teste = "(3+(8+6)/2)+(8*2+(5-(4*3+1)))*((5-(3*3))/3-(7+8)*2)-(2+2)";
+    string teste = "(A+(B)/C/(D)+E)+(F+(G-(H)))";
+
+    levels[{1, 1, 10, 1}] = {"A+"};
+    levels[{1, 1, 10, 2}] = {"+E"};    
+    levels[{1, 1, 15, 1}] = {"/C/"};    
+    levels[{1, 2, 30, 1}] = {"B"};
+    levels[{1, 2, 30, 2}] = {"D"};    
+
+    // levels[{0, 0, 20, 0, 1}] = {"*"};
+    // levels[{3, 3, 30, 1, 0}] = {"3*3"};
+    // levels[{3, 2, 10, 1, 1}] = {"5", {nullptr, }};
+    // levels[{3, 1, 15, 1, 1}] = {"3", "/", "-"};
+    // levels[{3, 1, 20, 2, 1}] = {"*2"};
+    // levels[{3, 2, 30, 2, 0}] = {"7+8"};
+
+    // levels[{2, 2, 10, 1, 1}] = {"5", "-"};
+    // levels[{2, 3, 30, 1, 0}] = {"4*3+1"};
+    // levels[{2, 1, 10, 1, 1}] = {"8*2", "+"};
+
+    // levels[{0, 0, 10, 0, 2}] = {"-"};
+
+    // levels[{4, 1, 30, 1, 0}] = {"2+2"};
+
+    // levels[{0, 0, 10, 0, 1}] = {"+"};
+}
+
+struct Operation {
     char operation = '\0';
     string left = "", right = "";
 
     string extraOperation = "";
     string extraNumber = "";
-
-    LinkOperation(const string &newLeft, const char &newOperation, const string &newRight) : operation(newOperation), left(newLeft), right(newRight) {}
-    LinkOperation(const string &newLeft, const char &newOperation, const string &newRight, const string &newExtraOperation, const string &newExtraNumber)
-        : operation(newOperation), left(newLeft), right(newRight), extraOperation(newExtraOperation), extraNumber(newExtraNumber) {}
-    LinkOperation(const char &newOperation, const string &newRight) : operation(newOperation), left(0), right(newRight) {}
-    LinkOperation(const string &newLeft, const char &newOperation) : operation(newOperation), left(right), right(0) {}
-    LinkOperation(const char &newOperation) : operation(newOperation), left(0), right(0) {}
 };
 
 string endInOperation(string &expression) {
