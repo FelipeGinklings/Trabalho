@@ -1,7 +1,7 @@
 import re
 import random
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Iterator, Union
 
 
 @dataclass
@@ -9,156 +9,140 @@ class MiniExpression:
     first: str = ""
     operation: str = ""
     second: str = ""
-    hasExtra: bool = False
+    has_extra: bool = False
     operation2: str = ""
     third: str = ""
 
     def __str__(self):
         result = self.first + self.operation + self.second
-        if self.hasExtra:
+        if self.has_extra:
             result += self.operation2 + self.third
         return result
 
 
-def organizeExpression(string: str) -> tuple[str, str, str]:
+def organize_expression(expression_str: str) -> tuple[str, str, str]:
     pattern = r"[+-]?[\da-zA-Z]+(?:[*/][+-]?[\da-zA-Z]+)+"
-    multiplications: list[str] = re.findall(pattern, string)
+    multiplications: list[str] = re.findall(pattern, expression_str)
     if not multiplications:
-        return "", "", string
+        return "", "", expression_str
 
-    sumsStr = string
+    sums_str = expression_str
     for mul in multiplications:
-        sumsStr = sumsStr.replace(mul, "", 1)
+        sums_str = sums_str.replace(mul, "", 1)
 
-    multiplicationsStr = "".join(multiplications)
-    startWithPlus = multiplicationsStr.startswith("+")
+    multiplications_str = "".join(multiplications)
+    start_with_plus = multiplications_str.startswith("+")
 
-    if sumsStr == "":
-        return multiplicationsStr[startWithPlus:], "", ""
+    if sums_str == "":
+        return multiplications_str[start_with_plus:], "", ""
 
-    if not (sumsStr.startswith("+") or sumsStr.startswith("-")):
-        sumsStr = "+" + sumsStr
+    if not (sums_str.startswith("+") or sums_str.startswith("-")):
+        sums_str = "+" + sums_str
 
-    return multiplicationsStr[startWithPlus:], sumsStr[0], sumsStr[1:]
-
-
-# def organizeExpression(
-#     string: str, withLetters: bool = False, withNumbers: bool = False
-# ) -> tuple[str, str, str]:
-#     pattern = r"[+-]?\d+(?:[*/][+-]?\d+)+"
-#     if withLetters:
-#         pattern = r"[+-]?[a-zA-Z]+(?:[*/][+-]?[a-zA-Z]+)+"
-#     multiplications: list[str] = re.findall(pattern, string)
-#     if multiplications.__len__() == 0:
-#         return "", string, ""
-#     sumsStr = string
-#     for mul in multiplications:
-#         sumsStr = sumsStr.replace(mul, "", 1)
-#     multiplicationsStr = "".join(multiplications)
-#     startWithPlus = multiplicationsStr.startswith("+")
-#     if sumsStr == "":
-#         return multiplicationsStr[(startWithPlus if 1 else 0) :], "", ""
-#     if not (sumsStr.startswith("+") or sumsStr.startswith("-")):
-#         sumsStr = "+" + sumsStr
-#     return multiplicationsStr[(startWithPlus if 1 else 0) :], sumsStr[1:], sumsStr[0]
+    return multiplications_str[start_with_plus:], sums_str[0], sums_str[1:]
 
 
-def matchToString(match: re.Match[str], string: str) -> str:
-    return string[match.start() : match.end()]
+def match_to_string(match: re.Match[str], expression_str: str) -> str:
+    return expression_str[match.start() : match.end()]
 
 
-def addToTheLastOne(first: str, miniExpressionsList: list[MiniExpression]) -> None:
-    lastOperation = miniExpressionsList.pop()
-    miniExpressionsList[-1].operation2 = lastOperation.operation
-    miniExpressionsList[-1].third = first
-    miniExpressionsList[-1].hasExtra = True
+def add_to_the_last_one(
+    last_first: str, mini_expressions_list: list[MiniExpression]
+) -> None:
+    if len(mini_expressions_list):
+        last_operation = mini_expressions_list.pop()
+        mini_expressions_list[-1].operation2 = last_operation.operation
+        mini_expressions_list[-1].third = last_first
+        mini_expressions_list[-1].has_extra = True
 
 
-def createMiniExpression(
+def create_mini_expression_lv2_helper(
     match: re.Match[str],
     numbers: Iterator[re.Match[str]],
     expression: str,
-    miniExpressionsList: list[MiniExpression],
+    mini_expressions_list: list[MiniExpression],
 ) -> (
     tuple[MiniExpression, re.Match[str]]
     | tuple[MiniExpression, None]
     | tuple[None, re.Match[str]]
     | tuple[None, None]
 ):
-    first = matchToString(match, expression)
-    if match.end() == expression.__len__():
-        addToTheLastOne(first, miniExpressionsList)
+    new_first = match_to_string(match, expression)
+    if match.end() == len(expression):
+        add_to_the_last_one(new_first, mini_expressions_list)
         return None, None
     operation = expression[match.end()]
     if operation in "+-":
-        addToTheLastOne(first, miniExpressionsList)
-        miniExpressionsList.append(MiniExpression("", operation))
+        add_to_the_last_one(new_first, mini_expressions_list)
+        mini_expressions_list.append(MiniExpression("", operation))
         return None, None
-    newMatch = next(numbers)
-    second = matchToString(newMatch, expression)
-    return MiniExpression(first, operation, second), newMatch
+    new_match = next(numbers)
+    second = match_to_string(new_match, expression)
+    return MiniExpression(new_first, operation, second), new_match
 
 
-def createMiniExpressionsLv2(mulStr: str) -> list[MiniExpression] | None:
-    if not mulStr.__len__():
+def create_mini_expressions_lv2(mul_str: str) -> list[MiniExpression] | None:
+    if not len(mul_str):
         return
-    miniExpressionsList: list[MiniExpression] = []
-    numbers = re.finditer(r"\b\d+\b", mulStr)
+    mini_expressions_list: list[MiniExpression] = []
+    numbers = re.finditer(r"[a-zA-Z\d]+", mul_str)
     for match in numbers:
-        miniExpression, lastMatch = createMiniExpression(
-            match, numbers, mulStr, miniExpressionsList
+        mini_expression, last_match = create_mini_expression_lv2_helper(
+            match, numbers, mul_str, mini_expressions_list
         )
-        if miniExpression == None and lastMatch and mulStr[lastMatch.end()] != "-":
-            miniExpressionsList.append(MiniExpression("", mulStr[lastMatch.end()]))
-        elif miniExpression and lastMatch == None:
-            miniExpressionsList.append(miniExpression)
+        if mini_expression == None and last_match and mul_str[last_match.end()] != "-":
+            mini_expressions_list.append(MiniExpression("", mul_str[last_match.end()]))
+        elif mini_expression and last_match == None:
+            mini_expressions_list.append(mini_expression)
             break
-        elif miniExpression and lastMatch:
-            miniExpressionsList.append(miniExpression)
-            if lastMatch.end() != mulStr.__len__():
-                miniExpressionsList.append(MiniExpression("", mulStr[lastMatch.end()]))
+        elif mini_expression and last_match:
+            mini_expressions_list.append(mini_expression)
+            if last_match.end() != len(mul_str):
+                mini_expressions_list.append(
+                    MiniExpression("", mul_str[last_match.end()])
+                )
     result = ""
-    if mulStr[0] == "-":
+    if mul_str[0] == "-":
         result += "-"
-    for miniExpression in miniExpressionsList:
-        result += miniExpression.__str__()
+    for mini_expression in mini_expressions_list:
+        result += str(mini_expression)
 
-    assert mulStr == result, f"Esperado: {mulStr}, mas obteve: {result}"
+    assert mul_str == result, f"Esperado: {mul_str}, mas obteve: {result}"
 
-    return miniExpressionsList
+    return mini_expressions_list
 
 
-def createMiniExpressionsLv1(sumsStr: str) -> list[MiniExpression] | None:
-    if not sumsStr.__len__():
+def create_mini_expressions_lv1(sums_str: str) -> list[MiniExpression] | None:
+    if not len(sums_str):
         return
-    miniExpressionsList: list[MiniExpression] = []
-    numbers = re.finditer(r"\b\d+\b", sumsStr)
+    mini_expressions_list: list[MiniExpression] = []
+    numbers = re.finditer(r"[a-zA-Z\d]+", sums_str)
     for match in numbers:
-        first = matchToString(match, sumsStr)
-        if match.end() == sumsStr.__len__() and miniExpressionsList.__len__() > 1:
-            miniExpressionsList[-1].second = first
-            miniExpressionsList[-1].hasExtra = True
+        first = match_to_string(match, sums_str)
+        if match.end() == len(sums_str) and len(mini_expressions_list) > 1:
+            mini_expressions_list[-1].second = first
+            mini_expressions_list[-1].has_extra = True
             break
-        elif match.end() == sumsStr.__len__():
-            miniExpressionsList.append(MiniExpression(first))
+        if match.end() == len(sums_str):
+            mini_expressions_list.append(MiniExpression(first))
             break
-        operation = sumsStr[match.end()]
+        operation = sums_str[match.end()]
         match = next(numbers)
-        second = matchToString(match, sumsStr)
-        miniExpressionsList.append(MiniExpression(first, operation, second))
-        if match.end() != sumsStr.__len__():
-            operation = sumsStr[match.end()]
-            miniExpressionsList.append(MiniExpression("", operation))
+        second = match_to_string(match, sums_str)
+        mini_expressions_list.append(MiniExpression(first, operation, second))
+        if match.end() != len(sums_str):
+            operation = sums_str[match.end()]
+            mini_expressions_list.append(MiniExpression("", operation))
 
     result = ""
-    for miniExpression in miniExpressionsList:
-        result += miniExpression.__str__()
-    assert sumsStr == result, f"Esperado: {sumsStr}, mas obteve: {result}"
+    for mini_expression in mini_expressions_list:
+        result += str(mini_expression)
+    assert sums_str == result, f"Esperado: {sums_str}, mas obteve: {result}"
 
-    return miniExpressionsList
+    return mini_expressions_list
 
 
-def generateExpression(size: int, withParenthesis: bool = False) -> str:
+def generate_expression(size: int, with_parenthesis: bool = False) -> str:
     if size <= 0:
         return ""
     operators = ["+", "-", "*", "/"]
@@ -167,7 +151,7 @@ def generateExpression(size: int, withParenthesis: bool = False) -> str:
         expression += random.choice(operators)
         expression += str(random.randint(1, 99))
 
-    if withParenthesis and size >= 3:
+    if with_parenthesis and size >= 3:
         # Calculate the number of parentheses pairs based on the size
         num_parentheses = min(
             size // 2, 3
@@ -219,160 +203,217 @@ def generateExpression(size: int, withParenthesis: bool = False) -> str:
     return expression
 
 
-def evaluateExpression(
+def evaluate_expression(
     size: int,
 ) -> tuple[list[MiniExpression], list[MiniExpression]] | list[MiniExpression] | None:
-    string = generateExpression(size)
-    if eval(string) > 1e15:
+    generated_expression = generate_expression(size)
+    if eval(generated_expression) > 1e15:
         return
-    mulStr, sumsStr, operation = organizeExpression(string)
-    evalResultMul = 0
-    evalResultSum = 0
-    if mulStr.__len__():
-        evalResultMul: float = round(eval(mulStr), 1)
-    if sumsStr.__len__():
-        evalResultSum: float = round(eval(operation + sumsStr))
-    evalResult = 0
-    evalResult = evalResultMul + evalResultSum
-    evalString: float = round(eval(string), 1)
-    resultEval = round(evalResult - evalString, 1)
+    mul_str, sums_str, operation = organize_expression(generated_expression)
+    eval_result_mul = 0
+    eval_result_sum = 0
+    if len(mul_str):
+        eval_result_mul: float = round(eval(mul_str), 1)
+    if len(sums_str):
+        eval_result_sum: float = round(eval(operation + sums_str))
+    eval_result = 0
+    eval_result = eval_result_mul + eval_result_sum
+    eval_string: float = round(eval(generated_expression), 1)
+    result_eval = round(eval_result - eval_string, 1)
     assert (
-        resultEval == 0
-    ), f"Esperado: 0, mas obteve: {resultEval} a string era {string} a nova string virou {mulStr+operation+sumsStr}"
+        result_eval == 0
+    ), f"Esperado: 0, mas obteve: {result_eval} a string era {generated_expression} a nova string virou {mul_str+operation+sums_str}"
     print(operation)
-    listLv1 = createMiniExpressionsLv1(sumsStr)
-    listLv2 = createMiniExpressionsLv2(mulStr)
+    list_lv1 = create_mini_expressions_lv1(sums_str)
+    list_lv2 = create_mini_expressions_lv2(mul_str)
 
-    if listLv1 and listLv2:
-        return listLv1, listLv2
-    elif listLv1:
-        return listLv1
-    elif listLv2:
-        return listLv2
+    if list_lv1 and list_lv2:
+        return list_lv1, list_lv2
+    if list_lv1:
+        return list_lv1
+    if list_lv2:
+        return list_lv2
     return
 
 
-def getNextLetter(letterMultiply: int, nextLetter: str):
-    return chr(ord("A") + (ord(nextLetter) - ord("A") + 1) % 26) * letterMultiply
+def get_next_letter(letter_multiply: int, next_letter: str):
+    return chr(ord("A") + (ord(next_letter) - ord("A") + 1) % 26) * letter_multiply
 
 
-def organizeParenthesis(
-    string: str,
-    dictOfLetter: dict[str, str],
-    lastLetter: str = "A",
-    inside: int = 0,
-    letterMultiply: int = 1,
-) -> tuple[None, None] | tuple[int, str]:
-    if lastLetter == "Z":
-        letterMultiply += 1
+def update_dictionary_entry(
+    dict_of_letters: dict[str, str],
+    next_letter: str,
+    mul: str,
+    op: str,
+    sums: str,
+):
+    if next_letter in dict_of_letters.keys():
+        dict_of_letters[next_letter] += mul + op + sums
+    else:
+        dict_of_letters[next_letter] = mul + op + sums
 
-    operation = ""
-    nextLetter = lastLetter
-    isInside = inside > 0
-    out = 0
-    newString = ""
-    returnLetter = lastLetter
-    char = ""
-    for index, _ in enumerate(string):
-        if index + out < string.__len__():
-            char = string[index + out]
+
+@dataclass
+class Interval:
+    start: int
+    end: int
+
+    def between(self, other: "Interval") -> bool:
+        return self.start < other.start and other.end < self.end
+
+
+def classify_by_parenthesis_level(expr: str):
+    levels_dict: dict[int, list[str]] = {}
+    current_level = 0
+    current_expr: list[str] = []
+
+    for char in expr:
+        if char == "(":
+            if current_expr:
+                levels_dict.setdefault(current_level, []).append("".join(current_expr))
+                current_expr = []
+            current_level += 1
+        elif char == ")":
+            if current_expr:
+                levels_dict.setdefault(current_level, []).append("".join(current_expr))
+                current_expr = []
+            current_level -= 1
         else:
-            if not operation:
-                break
-            first = ""
-            last = ""
-            if operation[0] in "+-*/":
-                first = operation[0]
-                operation = operation[1:]
-            if operation[-1] in "+-*/":
-                last = operation[-1]
-                operation = operation[:-1]
-            mul, op, sums = organizeExpression(operation)
-            dictOfLetter[nextLetter] = mul + op + sums
-            newString += first + nextLetter + last
-            break
-        if char not in "()":
-            operation += char
-        elif isInside and char == "(":
-            nextLetter = getNextLetter(letterMultiply, nextLetter)
-            if string[index + out - 1] in "+-/*":
-                operation = operation + nextLetter
-            inside += 1
-            newOut, returnLetterOut = organizeParenthesis(
-                string[index + 1 + out :], dictOfLetter, nextLetter, inside
-            )
-            if newOut and returnLetterOut:
-                inside -= 1
-                isInside = inside > 0
-                out += newOut
-                returnLetter = returnLetterOut
+            current_expr.append(char)
 
-        elif isInside and char == ")":
-            mul, op, sums = organizeExpression(operation)
-            dictOfLetter[lastLetter] = mul + op + sums
-            return index + out + 1, returnLetter
-        elif not isInside and char == "(" and index and operation.__len__() != 1:
-            first = ""
-            last = ""
-            if operation[0] in "+-*/":
-                first = operation[0]
-                operation = operation[1:]
-            if operation[-1] in "+-*/":
-                last = operation[-1]
-                operation = operation[:-1]
-            mul, op, sums = organizeExpression(operation)
-            dictOfLetter[nextLetter] = mul + op + sums
-            newString += first + nextLetter + last
-            nextLetter = getNextLetter(letterMultiply, nextLetter)
-            inside += 1
-            newOut, returnLetterOut = organizeParenthesis(
-                string[index + out + 1 :], dictOfLetter, nextLetter, inside
-            )
-            newString += nextLetter
-            if returnLetterOut:
-                nextLetter = getNextLetter(letterMultiply, returnLetterOut)
-            operation = ""
-            if newOut:
-                inside -= 1
-                isInside = inside > 0
-                out += newOut
-        elif not index and operation.__len__() != 1:
-            nextLetter = getNextLetter(letterMultiply, nextLetter)
-            newString += nextLetter
-            inside += 1
-            newOut, returnLetterOut = organizeParenthesis(
-                string[index + out + 1 :], dictOfLetter, nextLetter, inside
-            )
-            if returnLetterOut:
-                nextLetter = getNextLetter(letterMultiply, nextLetter)
-            operation = ""
-            if newOut:
-                inside -= 1
-                isInside = inside > 0
-                out += newOut
-        elif operation.__len__() == 1:
-            nextLetter = getNextLetter(letterMultiply, nextLetter)
-            inside += 1
-            newOut, returnLetterOut = organizeParenthesis(
-                string[index + out + 1 :], dictOfLetter, nextLetter, inside
-            )
-            newString += operation + nextLetter
-            if returnLetterOut:
-                nextLetter = getNextLetter(letterMultiply, nextLetter)
-            operation = ""
-            if newOut:
-                inside -= 1
-                isInside = inside > 0
-                out += newOut
+    # Add any remaining expression at the final level
+    if current_expr:
+        levels_dict.setdefault(current_level, []).append("".join(current_expr))
 
-    if not isInside:
-        mul, op, sums = organizeExpression(newString)
-        dictOfLetter["string"] = mul + op + sums
-    return None, None
+    return levels_dict
+
+
+@dataclass
+class Data:
+    expression: str = ""
+    has_l_operation: bool = False
+    left: str = ""
+    has_r_operation: bool = False
+    right: str = ""
+    is_operation_only: bool = False
+    has_visited: bool = False
+
+
+@dataclass
+class Node:
+    data: Data
+    left: Union["Node", None]
+    right: Union["Node", None]
+
+
+@dataclass
+class ChainedList:
+    root: Node | None
+
+
+def extract_parenthesis_intervals(expression_str: str):
+    parenthesis_matches = re.finditer(r"[\(\)]", expression_str)
+    interval_list: list[Interval] = []
+    start = 0
+    for match in parenthesis_matches:
+        end = match.start()
+        if end - start == 0:
+            start = end + 1
+            continue
+        interval_list.append(Interval(start, end))
+        start = end + 1
+    if (start - len(expression_str) - 1) > 1:
+        interval_list.append(Interval(start, len(expression_str) - 1))
+    return interval_list
+
+
+def has_operation(expression_sequence: str) -> tuple[bool, bool]:
+    if len(expression_sequence) <= 1:
+        return False, False
+    left = expression_sequence[0]
+    right = expression_sequence[-1]
+    operations = "+-/*"
+    if left in operations and right in operations:
+        return True, True
+    if left in operations:
+        return True, False
+    if right in operations:
+        return False, True
+    return False, False
+
+
+def create_data(expression_sequence: str) -> Data:
+    if len(expression_sequence) <= 1:
+        return Data(is_operation_only=True)
+    has_l_operation, has_r_operation = has_operation(expression_sequence)
+    left, right = expression_sequence[0], expression_sequence[-1]
+    return Data(expression_sequence, has_l_operation, left, has_r_operation, right)
+
+
+def create_chained_list(expression_sequence: list[str]) -> ChainedList | None:
+    new_chained_list = ChainedList(
+        Node(create_data(expression_sequence[0]), None, None)
+    )
+    if not new_chained_list.root:
+        return
+    current_node = new_chained_list.root
+    for expression in expression_sequence[1:-1]:
+        new_node = Node(create_data(expression), None, None)
+        current_node.right = new_node
+        new_node.left = current_node
+        current_node = new_node
+    new_node = Node(create_data(expression_sequence[-1]), None, None)
+    new_node.right = new_chained_list.root
+    new_node.left = current_node
+    new_chained_list.root.left = new_node
+    return new_chained_list
+
+
+def get_highest_level_value(levels_dict: dict[int, list[str]]):
+    key_list = list(levels_dict.keys())
+    key_list.sort()
+    new_first = levels_dict[key_list[-1]][0]
+    return new_first
+
+
+def are_all_visited(ordered_list_of_expressions: ChainedList) -> bool:
+    if (
+        not ordered_list_of_expressions.root
+        or not ordered_list_of_expressions.root.left
+    ):
+        return False
+    data = ordered_list_of_expressions.root.left.data
+    nav = ordered_list_of_expressions.root
+    while nav and data != nav.data:
+        if not nav.data.has_visited:
+            return False
+        nav = nav.right
+    return True
+
+
+def get_first_node(
+    first_expression: str, chained_list: ChainedList | None
+) -> Node | None:
+    if not chained_list or not chained_list.root:
+        return None
+    nav = chained_list.root.right
+    while nav and chained_list.root != nav:
+        if nav.data.expression == first_expression:
+            return nav
+        nav = nav.right
+    if chained_list.root.data.expression == first_expression:
+        return chained_list.root
+    return None
 
 
 if __name__ == "__main__":
-    string = generateExpression(10, True)
-    dictOfLetters: dict[str, str] = {}
-    organizeParenthesis(string, dictOfLetters)
-    print()
+    # STRING = generate_expression(10, True)
+    STRING = "32+61*((17+49*93-21+55)+73)*(17*65)"
+    intervals = extract_parenthesis_intervals(STRING)
+    levels = classify_by_parenthesis_level(STRING)
+    expression_order = [STRING[interval.start : interval.end] for interval in intervals]
+    new_chained_list = create_chained_list(expression_order)
+    first = get_highest_level_value(levels)
+    first_node = get_first_node(first, new_chained_list)
+
+    print(first)
