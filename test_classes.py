@@ -20,7 +20,7 @@ class MiniExpression:
 
 @dataclass
 class Operation:
-    operation: str
+    operation: str = ""
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Operation):
@@ -38,12 +38,9 @@ class Operation:
 
 @dataclass
 class Data:
-    expression: Union[str, Operation] = ""
-    has_l_operation: bool = False
-    left: Operation = field(default_factory=lambda: Operation(""))
-    has_r_operation: bool = False
-    right: Operation = field(default_factory=lambda: Operation(""))
-    is_operation_only: bool = False
+    value: str = ""
+    operation: Operation = field(default_factory=Operation)
+    is_operation: bool = False
 
 
 @dataclass
@@ -56,6 +53,7 @@ class Node:
 @dataclass
 class ParenthesisData:
     expression: str = ""
+    mini_expression: MiniExpression = field(default_factory=MiniExpression)
     next_parenthesis: dict[str, "ParenthesisData"] = field(default_factory=lambda: {})
 
 

@@ -5,7 +5,8 @@ from test_classes import MiniExpression, ParenthesisData
 
 
 def organize_expression(expression_str: str) -> str:
-    pattern = r"[+-]?[\da-zA-Z]+(?:[*/][+-]?[\da-zA-Z]+)+"
+    # pattern = r"[+-]?[\da-zA-Z]+(?:[*/][+-]?[\da-zA-Z]+)+"
+    pattern = r"[+-]?(?:\d+\.?\d*|[a-zA-Z]+)(?:[*/][+-]?(?:\d+\.?\d*|[a-zA-Z]+))+"
     multiplications: list[str] = re.findall(pattern, expression_str)
     if not multiplications:
         return expression_str
@@ -224,9 +225,6 @@ def get_next_letter(next_letter: str, multiplier: int = 1):
 
 
 def separate_by_parenthesis(expression: str, letter: str = "A"):
-    # has_parenthesis = re.findall(r"\(", expression)
-    # if not has_parenthesis:
-    #     return
     current_expression: str = ""
     new_data = ParenthesisData()
     level = 0
@@ -259,6 +257,5 @@ def separate_by_parenthesis(expression: str, letter: str = "A"):
 
 
 if __name__ == "__main__":
-    # STRING = generate_expression(10, True)
-    STRING = "32+61*((17+49*93-21+55)+73)*(17*65)/(20-65)"
-    new_levels = separate_by_parenthesis(STRING)
+    STRING = generate_expression(10, True)
+    ordered_operations = separate_by_parenthesis(STRING)
