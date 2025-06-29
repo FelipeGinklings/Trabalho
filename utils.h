@@ -71,6 +71,7 @@ string get_next_letter(const string &nextLetter, int multiplier = 1) {
 
 ExpressionResult organize_expression(const string &expression_str) {
     regex pattern(R"([+-]?(?:\d+\.?\d*|[a-zA-Z]+)(?:[*/][+-]?(?:\d+\.?\d*|[a-zA-Z]+))+)");
+
     vector<string> multiplications;
 
     sregex_iterator iter(expression_str.begin(), expression_str.end(), pattern);
@@ -114,7 +115,8 @@ string organized_operation_to_string(ExpressionResult organized_operation) {
     return organized_operation.multiplications + organized_operation.operation + organized_operation.sums;
 }
 
-ParenthesisData *separate_by_parenthesis(const string &expression, const string &letter = "A") {
+ParenthesisData *separate_by_parenthesis(const string &expression, const string &letter = "A", int multiplier = 1) {
+    if (letter == "Z") multiplier++;
     string current_expression = "";
     ParenthesisData *new_data = new ParenthesisData();
     int level = 0;
@@ -139,7 +141,7 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
             if (!current_expression.empty() && level == 1) {
                 ParenthesisData *next_parenthesis = separate_by_parenthesis(current_expression);
                 new_data->next_parenthesis[next_letter] = next_parenthesis;
-                next_letter = get_next_letter(next_letter);
+                next_letter = get_next_letter(next_letter, multiplier);
                 current_expression = "";
                 level--;
                 continue;
