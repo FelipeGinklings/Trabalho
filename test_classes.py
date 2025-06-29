@@ -3,22 +3,6 @@ from typing import Union
 
 
 @dataclass
-class MiniExpression:
-    first: str = ""
-    operation: str = ""
-    second: str = ""
-    has_extra: bool = False
-    operation2: str = ""
-    third: str = ""
-
-    def __str__(self):
-        result = self.first + self.operation + self.second
-        if self.has_extra:
-            result += self.operation2 + self.third
-        return result
-
-
-@dataclass
 class Operation:
     operation: str = ""
 
@@ -39,7 +23,6 @@ class Operation:
 @dataclass
 class Data:
     value: str = ""
-    operation: Operation = field(default_factory=Operation)
     is_operation: bool = False
 
 
@@ -53,7 +36,9 @@ class Node:
 @dataclass
 class ParenthesisData:
     expression: str = ""
-    mini_expression: MiniExpression = field(default_factory=MiniExpression)
+    multiplications: str = ""
+    operation: str = ""
+    sums: str = ""
     next_parenthesis: dict[str, "ParenthesisData"] = field(default_factory=lambda: {})
 
 
