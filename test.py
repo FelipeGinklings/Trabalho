@@ -1,30 +1,14 @@
 import re
 import random
-from dataclasses import dataclass
-from typing import Iterator, Union
+from typing import Iterator
+from test_classes import MiniExpression, ParenthesisData
 
 
-@dataclass
-class MiniExpression:
-    first: str = ""
-    operation: str = ""
-    second: str = ""
-    has_extra: bool = False
-    operation2: str = ""
-    third: str = ""
-
-    def __str__(self):
-        result = self.first + self.operation + self.second
-        if self.has_extra:
-            result += self.operation2 + self.third
-        return result
-
-
-def organize_expression(expression_str: str) -> tuple[str, str, str]:
+def organize_expression(expression_str: str) -> str:
     pattern = r"[+-]?[\da-zA-Z]+(?:[*/][+-]?[\da-zA-Z]+)+"
     multiplications: list[str] = re.findall(pattern, expression_str)
     if not multiplications:
-        return "", "", expression_str
+        return expression_str
 
     sums_str = expression_str
     for mul in multiplications:
@@ -32,14 +16,13 @@ def organize_expression(expression_str: str) -> tuple[str, str, str]:
 
     multiplications_str = "".join(multiplications)
     start_with_plus = multiplications_str.startswith("+")
-
     if sums_str == "":
-        return multiplications_str[start_with_plus:], "", ""
+        return multiplications_str[start_with_plus:]
 
     if not (sums_str.startswith("+") or sums_str.startswith("-")):
         sums_str = "+" + sums_str
 
-    return multiplications_str[start_with_plus:], sums_str[0], sums_str[1:]
+    return multiplications_str[start_with_plus:] + sums_str
 
 
 def match_to_string(match: re.Match[str], expression_str: str) -> str:
@@ -67,18 +50,18 @@ def create_mini_expression_lv2_helper(
     | tuple[None, re.Match[str]]
     | tuple[None, None]
 ):
-    new_first = match_to_string(match, expression)
+    first = match_to_string(match, expression)
     if match.end() == len(expression):
-        add_to_the_last_one(new_first, mini_expressions_list)
+        add_to_the_last_one(first, mini_expressions_list)
         return None, None
     operation = expression[match.end()]
     if operation in "+-":
-        add_to_the_last_one(new_first, mini_expressions_list)
+        add_to_the_last_one(first, mini_expressions_list)
         mini_expressions_list.append(MiniExpression("", operation))
         return None, None
     new_match = next(numbers)
     second = match_to_string(new_match, expression)
-    return MiniExpression(new_first, operation, second), new_match
+    return MiniExpression(first, operation, second), new_match
 
 
 def create_mini_expressions_lv2(mul_str: str) -> list[MiniExpression] | None:
@@ -236,184 +219,46 @@ def evaluate_expression(
     return
 
 
-def get_next_letter(letter_multiply: int, next_letter: str):
-    return chr(ord("A") + (ord(next_letter) - ord("A") + 1) % 26) * letter_multiply
+def get_next_letter(next_letter: str, multiplier: int = 1):
+    return chr(ord("A") + (ord(next_letter) - ord("A") + 1) % 26) * multiplier
 
 
-def update_dictionary_entry(
-    dict_of_letters: dict[str, str],
-    next_letter: str,
-    mul: str,
-    op: str,
-    sums: str,
-):
-    if next_letter in dict_of_letters.keys():
-        dict_of_letters[next_letter] += mul + op + sums
-    else:
-        dict_of_letters[next_letter] = mul + op + sums
-
-
-@dataclass
-class Interval:
-    start: int
-    end: int
-
-    def between(self, other: "Interval") -> bool:
-        return self.start < other.start and other.end < self.end
-
-
-def classify_by_parenthesis_level(expr: str):
-    levels_dict: dict[int, list[str]] = {}
-    current_level = 0
-    current_expr: list[str] = []
-
-    for char in expr:
+def separate_by_parenthesis(expression: str, letter: str = "A"):
+    # has_parenthesis = re.findall(r"\(", expression)
+    # if not has_parenthesis:
+    #     return
+    current_expression: str = ""
+    new_data = ParenthesisData()
+    level = 0
+    next_letter = letter
+    for index, char in enumerate(expression):
         if char == "(":
-            if current_expr:
-                levels_dict.setdefault(current_level, []).append("".join(current_expr))
-                current_expr = []
-            current_level += 1
+            if current_expression and level == 0:
+                new_data.expression += current_expression + next_letter
+                current_expression = ""
+                level += 1
+                continue
+            level += 1
+            if not index:
+                new_data.expression += letter
+                continue
         elif char == ")":
-            if current_expr:
-                levels_dict.setdefault(current_level, []).append("".join(current_expr))
-                current_expr = []
-            current_level -= 1
-        else:
-            current_expr.append(char)
-
-    # Add any remaining expression at the final level
-    if current_expr:
-        levels_dict.setdefault(current_level, []).append("".join(current_expr))
-
-    return levels_dict
-
-
-@dataclass
-class Data:
-    expression: str = ""
-    has_l_operation: bool = False
-    left: str = ""
-    has_r_operation: bool = False
-    right: str = ""
-    is_operation_only: bool = False
-    has_visited: bool = False
-
-
-@dataclass
-class Node:
-    data: Data
-    left: Union["Node", None]
-    right: Union["Node", None]
-
-
-@dataclass
-class ChainedList:
-    root: Node | None
-
-
-def extract_parenthesis_intervals(expression_str: str):
-    parenthesis_matches = re.finditer(r"[\(\)]", expression_str)
-    interval_list: list[Interval] = []
-    start = 0
-    for match in parenthesis_matches:
-        end = match.start()
-        if end - start == 0:
-            start = end + 1
-            continue
-        interval_list.append(Interval(start, end))
-        start = end + 1
-    if (start - len(expression_str) - 1) > 1:
-        interval_list.append(Interval(start, len(expression_str) - 1))
-    return interval_list
-
-
-def has_operation(expression_sequence: str) -> tuple[bool, bool]:
-    if len(expression_sequence) <= 1:
-        return False, False
-    left = expression_sequence[0]
-    right = expression_sequence[-1]
-    operations = "+-/*"
-    if left in operations and right in operations:
-        return True, True
-    if left in operations:
-        return True, False
-    if right in operations:
-        return False, True
-    return False, False
-
-
-def create_data(expression_sequence: str) -> Data:
-    if len(expression_sequence) <= 1:
-        return Data(is_operation_only=True)
-    has_l_operation, has_r_operation = has_operation(expression_sequence)
-    left, right = expression_sequence[0], expression_sequence[-1]
-    return Data(expression_sequence, has_l_operation, left, has_r_operation, right)
-
-
-def create_chained_list(expression_sequence: list[str]) -> ChainedList | None:
-    new_chained_list = ChainedList(
-        Node(create_data(expression_sequence[0]), None, None)
-    )
-    if not new_chained_list.root:
-        return
-    current_node = new_chained_list.root
-    for expression in expression_sequence[1:-1]:
-        new_node = Node(create_data(expression), None, None)
-        current_node.right = new_node
-        new_node.left = current_node
-        current_node = new_node
-    new_node = Node(create_data(expression_sequence[-1]), None, None)
-    new_node.right = new_chained_list.root
-    new_node.left = current_node
-    new_chained_list.root.left = new_node
-    return new_chained_list
-
-
-def get_highest_level_value(levels_dict: dict[int, list[str]]):
-    key_list = list(levels_dict.keys())
-    key_list.sort()
-    new_first = levels_dict[key_list[-1]][0]
-    return new_first
-
-
-def are_all_visited(ordered_list_of_expressions: ChainedList) -> bool:
-    if (
-        not ordered_list_of_expressions.root
-        or not ordered_list_of_expressions.root.left
-    ):
-        return False
-    data = ordered_list_of_expressions.root.left.data
-    nav = ordered_list_of_expressions.root
-    while nav and data != nav.data:
-        if not nav.data.has_visited:
-            return False
-        nav = nav.right
-    return True
-
-
-def get_first_node(
-    first_expression: str, chained_list: ChainedList | None
-) -> Node | None:
-    if not chained_list or not chained_list.root:
-        return None
-    nav = chained_list.root.right
-    while nav and chained_list.root != nav:
-        if nav.data.expression == first_expression:
-            return nav
-        nav = nav.right
-    if chained_list.root.data.expression == first_expression:
-        return chained_list.root
-    return None
+            if current_expression and level == 1:
+                next_parenthesis = separate_by_parenthesis(current_expression)
+                new_data.next_parenthesis[next_letter] = next_parenthesis
+                next_letter = get_next_letter(next_letter)
+                current_expression = ""
+                level -= 1
+                continue
+            level -= 1
+        current_expression += char
+    if current_expression:
+        new_data.expression += current_expression
+    new_data.expression = organize_expression(new_data.expression)
+    return new_data
 
 
 if __name__ == "__main__":
     # STRING = generate_expression(10, True)
-    STRING = "32+61*((17+49*93-21+55)+73)*(17*65)"
-    intervals = extract_parenthesis_intervals(STRING)
-    levels = classify_by_parenthesis_level(STRING)
-    expression_order = [STRING[interval.start : interval.end] for interval in intervals]
-    new_chained_list = create_chained_list(expression_order)
-    first = get_highest_level_value(levels)
-    first_node = get_first_node(first, new_chained_list)
-
-    print(first)
+    STRING = "32+61*((17+49*93-21+55)+73)*(17*65)/(20-65)"
+    new_levels = separate_by_parenthesis(STRING)
