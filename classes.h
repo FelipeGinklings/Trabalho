@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "arvore_sbb.h"
+
 using namespace std;
 
 struct Operation {
@@ -43,12 +45,15 @@ struct ParenthesisData {
     string multiplications;
     string operation;
     string sums;
+    AVLTree<string> tree{};
     unordered_map<string, ParenthesisData*> next_parenthesis;
 
     // Construtores
-    ParenthesisData() : expression(""), multiplications(""), operation(""), sums("") {}
+    ParenthesisData() : expression(""), multiplications(""), operation(""), sums("") { initializeTree(tree); }
     ParenthesisData(const string& expr, const string& mult = "", const string& op = "", const string& sum = "")
-        : expression(expr), multiplications(mult), operation(op), sums(sum) {}
+        : expression(expr), multiplications(mult), operation(op), sums(sum) {
+        initializeTree(tree);
+    }
 };
 
 struct ExpressionResult {

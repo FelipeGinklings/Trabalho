@@ -115,6 +115,46 @@ string organized_operation_to_string(ExpressionResult organized_operation) {
     return organized_operation.multiplications + organized_operation.operation + organized_operation.sums;
 }
 
+vector<string> re_findall(const string &pattern, const string &text) {
+    regex re(pattern);
+    sregex_iterator it(text.begin(), text.end(), re);
+    sregex_iterator end;
+
+    vector<string> matches;
+    while (it != end) {
+        smatch match = *it;
+        matches.push_back(match.str());
+        ++it;
+    }
+
+    return matches;
+}
+
+void add_characters_to_tree(AVLTree<string> &tree, const string &expression) {
+    std::cout << expression << std::endl;
+    regex pattern_numbers(R"([a-zA-Z]+|\d+\.?\d*)");
+    bool first_number_is_negative = expression[0] == '-';
+    sregex_iterator iter_numbers(expression.begin(), expression.end(), pattern_numbers);
+    sregex_iterator end;
+    string operation = "";
+    string number = iter_numbers->str();
+    insert(tree.root, 0, (first_number_is_negative ? "-" : "") + number);
+    size_t operation_index = iter_numbers->position() + iter_numbers->length();
+    operation = expression[operation_index];
+    insert(tree.root, 1, operation);
+    ++iter_numbers;
+    for (int i = 2; iter_numbers != end; ++i, ++iter_numbers) {
+        string number = iter_numbers->str();
+        size_t operation_index = iter_numbers->position() + iter_numbers->length();
+        insert(tree.root, i, number);
+        if (operation_index < expression.length()) {
+            operation = expression[operation_index];
+            i++;
+            insert(tree.root, i, operation);
+        }
+    }
+}
+
 ParenthesisData *separate_by_parenthesis(const string &expression, const string &letter = "A", int multiplier = 1) {
     if (letter == "Z") multiplier++;
     string current_expression = "";
@@ -160,6 +200,6 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
     new_data->multiplications = new_organized_expression.multiplications;
     new_data->operation = new_organized_expression.operation;
     new_data->sums = new_organized_expression.sums;
-
+    add_characters_to_tree(new_data->tree, new_data->expression);
     return new_data;
 }

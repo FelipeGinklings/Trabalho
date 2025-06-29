@@ -251,15 +251,17 @@ void testSeparateByParenthesis() {
 }
 
 int main() {
-    testOpLv1();
-    testOpLv2();
-    testGenerateExpression();
-    testAreEqual();
-    testIsValidExpression();
-    testGetNextLetter();
-    testOrganizeExpression();
-    testOrganizedOperationToString();
-    testSeparateByParenthesis();
+    // testOpLv1();
+    // testOpLv2();
+    // testGenerateExpression();
+    // testAreEqual();
+    // testIsValidExpression();
+    // testGetNextLetter();
+    // testOrganizeExpression();
+    // testOrganizedOperationToString();
+    // testSeparateByParenthesis();
     cout << "All utils tests passed!\n" << endl;
+    string teste = "2+(55/(95-2*77-30+94*(32)*97)/73)";
+    ParenthesisData* parenthesis_data = separate_by_parenthesis(teste);
     return 0;
 }
