@@ -2,6 +2,7 @@ import re
 import random
 from test_classes import ParenthesisData
 
+
 def organized_operation_to_string(organized_operation: tuple[str, str, str]) -> str:
     return organized_operation[0] + organized_operation[1] + organized_operation[2]
 
@@ -26,10 +27,6 @@ def organize_expression(expression_str: str) -> tuple[str, str, str]:
         sums_str = "+" + sums_str
 
     return multiplications_str[start_with_plus:], sums_str[0], sums_str[1:]
-
-
-def match_to_string(match: re.Match[str], expression_str: str) -> str:
-    return expression_str[match.start() : match.end()]
 
 
 def generate_expression(size: int, with_parenthesis: bool = False) -> str:
@@ -127,15 +124,14 @@ def separate_by_parenthesis(expression: str, letter: str = "A"):
         new_data.expression += current_expression
     new_organized_expression = organize_expression(new_data.expression)
     new_data.expression = organized_operation_to_string(new_organized_expression)
-    new_data.multiplications, new_data.operation, new_data.sums = new_organized_expression
-    
+    new_data.multiplications, new_data.operation, new_data.sums = (
+        new_organized_expression
+    )
+
     return new_data
-
-
-def teste_func(t: str):
-    t += "batata"
 
 
 if __name__ == "__main__":
     STRING = generate_expression(10, True)
     ordered_operations = separate_by_parenthesis(STRING)
+    print()

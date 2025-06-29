@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "circularChainedList.hpp"
+#include "classes.h"
 #include "pilha.h"
 
 using namespace std;
@@ -60,4 +60,104 @@ bool isValidExpression(const string &expression) {
     }
     if (stackOfChars.first != nullptr) isValid = false;
     return isValid;
+}
+
+string get_next_letter(const string &nextLetter, int multiplier = 1) {
+    if (nextLetter.empty()) return "";
+    char firstChar = nextLetter[0];
+    char nextChar = 'A' + (firstChar - 'A' + 1) % 26;
+    return string(multiplier, nextChar);
+}
+
+ExpressionResult organize_expression(const string &expression_str) {
+    regex pattern(R"([+-]?(?:\d+\.?\d*|[a-zA-Z]+)(?:[*/][+-]?(?:\d+\.?\d*|[a-zA-Z]+))+)");
+    vector<string> multiplications;
+
+    sregex_iterator iter(expression_str.begin(), expression_str.end(), pattern);
+    sregex_iterator end;
+
+    for (; iter != end; ++iter) {
+        multiplications.push_back(iter->str());
+    }
+
+    if (multiplications.empty()) {
+        return ExpressionResult("", "", expression_str);
+    }
+
+    string sums_str = expression_str;
+    for (const string &mul : multiplications) {
+        size_t pos = sums_str.find(mul);
+        if (pos != string::npos) {
+            sums_str.replace(pos, mul.length(), "");
+        }
+    }
+
+    string multiplications_str = "";
+    for (const string &mul : multiplications) {
+        multiplications_str += mul;
+    }
+
+    bool start_with_plus = multiplications_str.length() > 0 && multiplications_str[0] == '+';
+
+    if (sums_str == "") {
+        return ExpressionResult(start_with_plus ? multiplications_str.substr(1) : multiplications_str, "", "");
+    }
+
+    if (!(sums_str[0] == '+' || sums_str[0] == '-')) {
+        sums_str = "+" + sums_str;
+    }
+
+    return ExpressionResult(start_with_plus ? multiplications_str.substr(1) : multiplications_str, string(1, sums_str[0]), sums_str.substr(1));
+}
+
+string organized_operation_to_string(ExpressionResult organized_operation) {
+    return organized_operation.multiplications + organized_operation.operation + organized_operation.sums;
+}
+
+ParenthesisData *separate_by_parenthesis(const string &expression, const string &letter = "A") {
+    string current_expression = "";
+    ParenthesisData *new_data = new ParenthesisData();
+    int level = 0;
+    string next_letter = letter;
+
+    for (size_t index = 0; index < expression.length(); index++) {
+        char ch = expression[index];
+
+        if (ch == '(') {
+            if (!current_expression.empty() && level == 0) {
+                new_data->expression += current_expression + next_letter;
+                current_expression = "";
+                level++;
+                continue;
+            }
+            level++;
+            if (index == 0) {
+                new_data->expression += letter;
+                continue;
+            }
+        } else if (ch == ')') {
+            if (!current_expression.empty() && level == 1) {
+                ParenthesisData *next_parenthesis = separate_by_parenthesis(current_expression);
+                new_data->next_parenthesis[next_letter] = next_parenthesis;
+                next_letter = get_next_letter(next_letter);
+                current_expression = "";
+                level--;
+                continue;
+            }
+            level--;
+        }
+        current_expression += ch;
+    }
+
+    if (!current_expression.empty()) {
+        new_data->expression += current_expression;
+    }
+
+    ExpressionResult new_organized_expression = organize_expression(new_data->expression);
+    new_data->expression = organized_operation_to_string(new_organized_expression);
+    new_data->multiplications = new_organized_expression.multiplications;
+    new_data->operation = new_organized_expression.operation;
+    new_data->sums = new_organized_expression.sums;
+
+    return new_data;
 }
