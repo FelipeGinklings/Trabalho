@@ -225,15 +225,15 @@ void executeTree(Tree<TYPE> &t) {}
 
 template <typename TYPE>
 void inOrder(Tree<TYPE> t) {
-    inOrder(t.root);
+    in_order(t.root);
 }
 
 template <typename TYPE>
 void inOrder(NodeT<TYPE> *node) {
     if (node == nullptr) return;
-    inOrder(node->left);
+    in_order(node->left);
     std::cout << node->data;
-    inOrder(node->right);
+    in_order(node->right);
 }
 
 template <typename TYPE>

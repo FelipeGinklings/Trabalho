@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "arvore_sbb.h"
+#include "linked_list.hpp"
 
 using namespace std;
 
@@ -33,25 +34,30 @@ struct Operation {
 
 struct Data {
     string value;
-    bool is_operation;
+    int depth;
+    bool operation;
 
     // Construtores
-    Data() : value(""), is_operation(false) {}
-    Data(const string& val, bool is_op = false) : value(val), is_operation(is_op) {}
+    Data() : value(""), operation(false) {}
+    Data(const string& val, int new_depth, bool is_op = false) : value(val), depth(new_depth), operation(is_op) {}
+
+    Operation get_operation() { return Operation(this->value); }
 };
 
 struct ParenthesisData {
-    string expression;
-    string multiplications;
-    string operation;
-    string sums;
+    string expression = "";
+    // string multiplications;
+    // string operation;
+    // string sums;
     // AVLTree<string> tree{};
+    // LinkedList<string> values_list = LinkedList<string>();
     unordered_map<string, ParenthesisData*> next_parenthesis;
 
     // Construtores
-    ParenthesisData() : expression(""), multiplications(""), operation(""), sums("") {}
-    ParenthesisData(const string& expr, const string& mult = "", const string& op = "", const string& sum = "")
-        : expression(expr), multiplications(mult), operation(op), sums(sum) {
+    // ParenthesisData() : expression(""), multiplications(""), operation(""), sums("") {}
+    ParenthesisData() {}
+    // ParenthesisData(const string& expr, const string& mult = "", const string& op = "", const string& sum = "") : expression(expr) {
+    ParenthesisData(const string& expr) : expression(expr) {
         // initializeTree(tree);
     }
 };

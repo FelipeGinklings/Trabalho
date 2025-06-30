@@ -200,22 +200,22 @@ void testOrganizedOperationToString() {
 
 void testSeparateByParenthesis() {
     auto tree = AVLTree<string>{};
-    initializeTree(tree);
+    initialize_tree(tree);
     // Test simple expression without parentheses
     ParenthesisData* result1 = separate_by_parenthesis("1+2");
     assert(result1->expression == "1+2");
-    assert(result1->multiplications == "");
-    assert(result1->operation == "");
-    assert(result1->sums == "1+2");
+    // assert(result1->multiplications == "");
+    // assert(result1->operation == "");
+    // assert(result1->sums == "1+2");
     assert(result1->next_parenthesis.empty());
     delete result1;
 
     // Test simple parentheses
     ParenthesisData* result2 = separate_by_parenthesis("(1+2)");
     assert(result2->expression == "A");
-    assert(result2->multiplications == "");
-    assert(result2->operation == "");
-    assert(result2->sums == "A");
+    // assert(result2->multiplications == "");
+    // assert(result2->operation == "");
+    // assert(result2->sums == "A");
     assert(result2->next_parenthesis.count("A") == 1);
     assert(result2->next_parenthesis["A"]->expression == "1+2");
     // Clean up nested data
@@ -225,9 +225,9 @@ void testSeparateByParenthesis() {
     // Test expression with parentheses in middle
     ParenthesisData* result3 = separate_by_parenthesis("1+(2+3)");
     assert(result3->expression == "1+A");
-    assert(result3->multiplications == "");
-    assert(result3->operation == "");
-    assert(result3->sums == "1+A");
+    // assert(result3->multiplications == "");
+    // assert(result3->operation == "");
+    // assert(result3->sums == "1+A");
     assert(result3->next_parenthesis.count("A") == 1);
     assert(result3->next_parenthesis["A"]->expression == "2+3");
     // Clean up
@@ -237,9 +237,9 @@ void testSeparateByParenthesis() {
     // Test multiple parentheses
     ParenthesisData* result4 = separate_by_parenthesis("(1+2)+(3+4)");
     assert(result4->expression == "A+B");
-    assert(result4->multiplications == "");
-    assert(result4->operation == "");
-    assert(result4->sums == "A+B");
+    // assert(result4->multiplications == "");
+    // assert(result4->operation == "");
+    // assert(result4->sums == "A+B");
     assert(result4->next_parenthesis.count("A") == 1);
     assert(result4->next_parenthesis.count("B") == 1);
     assert(result4->next_parenthesis["A"]->expression == "1+2");
@@ -263,10 +263,15 @@ int main() {
     // testOrganizedOperationToString();
     // testSeparateByParenthesis();
     // cout << "All utils tests passed!\n" << endl;
-    string teste = "2+(55/(95-2*77-30+94*(32)*97)/73)";
-    auto tree = AVLTree<string>{};
-    initializeTree(tree);
+    // string teste = "2+(55/(95-2*77-30+94*(32)*97)/73)";
+    string teste = "3*(8/2*(3*2)+6-2)-1+2";
+    // auto tree = AVLTree<string>{};
+    // initializeTree(tree);
+    auto new_linked_list = LinkedList<string>();
     ParenthesisData* parenthesis_data = separate_by_parenthesis(teste);
-    add_characters_to_tree(tree, parenthesis_data);
+    add_characters_to_linked_list(new_linked_list, parenthesis_data);
+    // calculate_tree(tree.root, tree.root->left);
+    // navigate_inside_parenthesis(parenthesis_data, tree);
+    auto vector_teste = new_linked_list.convert_to_vector();
     return 0;
 }

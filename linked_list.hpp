@@ -12,13 +12,13 @@ struct NodeC {
 };
 
 template <typename Type>
-struct CircularLinkedList {
+struct LinkedList {
     NodeC<Type> *start, *end;
     size_t size;
 
-    CircularLinkedList() : start(nullptr), end(nullptr), size(0) {}
+    LinkedList() : start(nullptr), end(nullptr), size(0) {}
 
-    bool pushFront(Type data) {
+    bool push_front(Type data) {
         auto *newItem = new NodeC<Type>;
         newItem->data = data;
         this->size += 1;
@@ -32,7 +32,7 @@ struct CircularLinkedList {
         return true;
     }
 
-    bool pushBack(Type data) {
+    bool push_back(Type data) {
         auto *newItem = new NodeC<Type>;
         newItem->data = data;
         newItem->next = this->start;
@@ -47,7 +47,7 @@ struct CircularLinkedList {
         return true;
     }
 
-    vector<Type> convertToVector() {
+    vector<Type> convert_to_vector() {
         vector<Type> newVector;
         NodeC<Type> *nav = this->start;
         while (nav != this->end) {

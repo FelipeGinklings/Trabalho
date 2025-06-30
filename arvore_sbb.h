@@ -21,7 +21,7 @@ struct AVLTree {
 };
 
 template <typename TYPE>
-void initializeTree(AVLTree<TYPE> &a) {
+void initialize_tree(AVLTree<TYPE> &a) {
     a.root = nullptr;
 }
 
@@ -126,30 +126,22 @@ int insert(Node<TYPE> *&node, int key, TYPE data) {
 }
 
 template <typename TYPE>
-void preOrder(Node<TYPE> *node) {
+void in_order(Node<TYPE> *node) {
     if (node != nullptr) {
-        std::cout << node->data << ", ";
-        preOrder(node->left);
-        preOrder(node->right);
-    }
-}
-
-template <typename TYPE>
-void inOrder(Node<TYPE> *node) {
-    if (node != nullptr) {
-        inOrder(node->left);
+        in_order(node->left);
         std::cout << node->data;
-        inOrder(node->right);
+        in_order(node->right);
     }
 }
 
-template <typename TYPE>
-void postOrder(Node<TYPE> *node) {
-    if (node != nullptr) {
-        postOrder(node->left);
-        postOrder(node->right);
-        std::cout << node->data << ", ";
+std::string calculate_tree(Node<std::string> *node, Node<std::string> *next) {
+    if (next != nullptr) {
+        auto left = calculate_tree(node->left, node->left->left);
+        std::string operation = node->data;
+        auto right = calculate_tree(node->right, node->right->right);
+        return left + operation + right;
     }
+    return node->data;
 }
 
 #endif

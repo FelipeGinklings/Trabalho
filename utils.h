@@ -130,13 +130,16 @@ vector<string> re_findall(const string &pattern, const string &text) {
     return matches;
 }
 
-int add_operation(AVLTree<string> &tree, int &key, string &number, sregex_iterator &iter_numbers, string &expression, string &operation, int retFlag = 1) {
-    insert(tree.root, key, number);
+// int add_operation(ParenthesisData *parenthesis_data, AVLTree<string> &tree, int &key, string &number, sregex_iterator &iter_numbers, string &expression, string &operation,
+int add_operation(LinkedList<Data> &linked_expression, int &key, string &number, sregex_iterator &iter_numbers, string &expression, string &operation, int depth, int retFlag = 1) {
+    // insert(tree.root, key, number);
+    linked_expression.push_back(Data(number, depth));
     size_t operation_index = iter_numbers->position() + iter_numbers->length();
     if (operation_index >= expression.length()) return 2;
     operation = expression[operation_index];
     ++key;
-    insert(tree.root, key, operation);
+    // insert(tree.root, key, operation);
+    linked_expression.push_back(Data(operation, depth, true));
     return 1;
 }
 
@@ -145,23 +148,35 @@ bool is_letter(const string &letter) {
     return regex_match(letter, letters_regex);
 }
 
-int add_characters_to_tree(AVLTree<string> &tree, ParenthesisData *parenthesisData, int key = 0) {
+// int add_characters_to_tree(AVLTree<string> &tree, ParenthesisData *parenthesis_data, int key = 0) {
+int add_characters_to_linked_list(LinkedList<Data> &linked_expression, ParenthesisData *parenthesis_data, int key = 0, int depth = 0) {
     regex pattern_numbers(R"([a-zA-Z]+|\d+\.?\d*)");
-    string expression = parenthesisData->expression;
+    string expression = parenthesis_data->expression;
     bool first_number_is_negative = expression[0] == '-';
     sregex_iterator iter_numbers(expression.begin(), expression.end(), pattern_numbers), end;
-    string number = (first_number_is_negative ? "-" : "") + iter_numbers->str();
+    string first_number = (first_number_is_negative ? "-" : "") + iter_numbers->str();
     string operation = "";
-    add_operation(tree, key, number, iter_numbers, expression, operation);
+    // int ret_flag = add_operation(parenthesis_data, tree, key, first_number, iter_numbers, expression, operation);
+    int ret_flag = add_operation(linked_expression, key, first_number, iter_numbers, expression, operation, depth);
+    if (ret_flag == 2) return key;
     ++iter_numbers;
     key++;
     for (key = key; iter_numbers != end; ++key, ++iter_numbers) {
         string number = iter_numbers->str();
-        if (is_letter(number))
-            key = add_characters_to_tree(tree, parenthesisData->next_parenthesis[number], key);
-        else {
-            int retFlag = add_operation(tree, key, number, iter_numbers, expression, operation);
-            if (retFlag == 2) break;
+        if (is_letter(number)) {
+            key = add_characters_to_linked_list(linked_expression, parenthesis_data->next_parenthesis[number], key + 1, depth + 1);
+            size_t operation_index = iter_numbers->position() + iter_numbers->length();
+            if (operation_index >= expression.length()) return 2;
+            operation = expression[operation_index];
+            ++key;
+            // insert(tree.root, key, operation);
+            linked_expression.push_back(Data(operation, depth, true));
+        } else {
+            ret_flag = add_operation(linked_expression, key, number, iter_numbers, expression, operation, depth);
+            if (ret_flag == 2) {
+                key++;
+                break;
+            }
         }
     }
     return key;
@@ -201,12 +216,32 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
     }
 
     if (!current_expression.empty()) new_data->expression += current_expression;
-
-    cout << new_data->expression << endl << endl;
     ExpressionResult new_organized_expression = organize_expression(new_data->expression);
     new_data->expression = organized_operation_to_string(new_organized_expression);
-    new_data->multiplications = new_organized_expression.multiplications;
-    new_data->operation = new_organized_expression.operation;
-    new_data->sums = new_organized_expression.sums;
+    // new_data->multiplications = new_organized_expression.multiplications;
+    // new_data->operation = new_organized_expression.operation;
+    // new_data->sums = new_organized_expression.sums;
     return new_data;
+}
+
+struct NavigateInsideParenthesis {
+    int last_depth = 0;
+    Node<string> *node = nullptr;
+};
+
+int navigate_inside_parenthesis(ParenthesisData *parenthesisData, AVLTree<string> &tree, int depth = 0) {
+    int last_depth = depth;
+    if (!parenthesisData->next_parenthesis.empty() && !depth) {
+        ParenthesisData *next_parenthesis_data = nullptr;
+        for (auto &[first, second] : parenthesisData->next_parenthesis["A"]->next_parenthesis) {
+            int returned_depth = navigate_inside_parenthesis(second, tree, depth + 1);
+            if (returned_depth > last_depth) last_depth = returned_depth;
+        }
+    } else if (!parenthesisData->next_parenthesis.empty()) {
+        for (auto &[first, second] : parenthesisData->next_parenthesis) {
+            int returned_depth = navigate_inside_parenthesis(second, tree, depth + 1);
+            if (returned_depth > last_depth) last_depth = returned_depth;
+        }
+    }
+    return last_depth;
 }
