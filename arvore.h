@@ -238,7 +238,7 @@ void inOrder(NodeT<TYPE> *node) {
 
 template <typename TYPE>
 void printTree(Tree<TYPE> t, bool withKey = false) {
-    printTree(t.root, withKey);
+    print_tree(t.root, withKey);
 }
 
 template <typename TYPE>
@@ -260,8 +260,8 @@ void printTree(NodeT<TYPE> *node, bool withKey, const string &prefix = "", bool 
     bool hasRight = node->right != nullptr;
 
     if (hasLeft || hasRight) {
-        if (hasLeft) printTree(node->left, withKey, prefix + (isLeft ? "│   " : "    "), true);
-        if (hasRight) printTree(node->right, withKey, prefix + (isLeft ? "│   " : "    "), false);
+        if (hasLeft) print_tree(node->left, withKey, prefix + (isLeft ? "│   " : "    "), true);
+        if (hasRight) print_tree(node->right, withKey, prefix + (isLeft ? "│   " : "    "), false);
     }
 }
 

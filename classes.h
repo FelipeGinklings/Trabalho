@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "arvore_sbb.h"
-#include "linked_list.hpp"
 
 using namespace std;
 
@@ -16,19 +15,38 @@ struct Operation {
     Operation() : operation("") {}
     Operation(const string& op) : operation(op) {}
 
-    // Operador de igualdade
     bool operator==(const Operation& other) const { return operation == other.operation; }
 
-    // Operador menor que (para comparar prioridade)
     bool operator<(const Operation& other) const {
         unordered_map<string, int> priority = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
         return priority[operation] < priority[other.operation];
     }
 
-    // Operador maior que (para comparar prioridade)
     bool operator>(const Operation& other) const {
         unordered_map<string, int> priority = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
         return priority[operation] > priority[other.operation];
+    }
+
+    bool operator>=(const Operation& other) const {
+        unordered_map<string, int> priority = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
+        return priority[operation] >= priority[other.operation];
+    }
+
+    bool operator<=(const Operation& other) const {
+        unordered_map<string, int> priority = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
+        return priority[operation] <= priority[other.operation];
+    }
+
+    // Function to apply the operation to two numbers
+    double apply(double a, double b) const {
+        if (operation == "+") return a + b;
+        if (operation == "-") return a - b;
+        if (operation == "*") return a * b;
+        if (operation == "/") {
+            if (b == 0) throw invalid_argument("Division by zero");
+            return a / b;
+        }
+        throw invalid_argument("Unknown operation: " + operation);
     }
 };
 
@@ -49,17 +67,15 @@ struct ParenthesisData {
     // string multiplications;
     // string operation;
     // string sums;
-    // AVLTree<string> tree{};
+    AVLTree<string> tree{};
     // LinkedList<string> values_list = LinkedList<string>();
     unordered_map<string, ParenthesisData*> next_parenthesis;
 
     // Construtores
     // ParenthesisData() : expression(""), multiplications(""), operation(""), sums("") {}
-    ParenthesisData() {}
+    ParenthesisData() { initialize_tree(this->tree); }
     // ParenthesisData(const string& expr, const string& mult = "", const string& op = "", const string& sum = "") : expression(expr) {
-    ParenthesisData(const string& expr) : expression(expr) {
-        // initializeTree(tree);
-    }
+    ParenthesisData(const string& expr) : expression(expr) { initialize_tree(this->tree); }
 };
 
 struct ExpressionResult {
@@ -70,4 +86,52 @@ struct ExpressionResult {
     // Construtores
     ExpressionResult() : multiplications(""), operation(""), sums("") {}
     ExpressionResult(const string& mult, const string& op, const string& sum) : multiplications(mult), operation(op), sums(sum) {}
+};
+
+template <typename Type>
+struct LinkedList {
+    Node<Type>*start, *end;
+    size_t size;
+
+    LinkedList() : start(nullptr), end(nullptr), size(0) {}
+
+    bool push_front(Type data) {
+        auto* newItem = new Node<Type>;
+        newItem->data = data;
+        this->size += 1;
+        if (this->end == nullptr) {
+            this->end = newItem;
+            this->start = newItem;
+        } else {
+            newItem->next = this->start;
+            this->start = newItem;
+        }
+        return true;
+    }
+
+    bool push_back(Type data) {
+        auto* newItem = new Node<Type>;
+        newItem->data = data;
+        newItem->next = this->start;
+        this->size += 1;
+        if (this->end == nullptr) {
+            this->end = newItem;
+            this->start = newItem;
+        } else {
+            this->end->next = newItem;
+            this->end = newItem;
+        }
+        return true;
+    }
+
+    vector<Type> convert_to_vector() {
+        vector<Type> newVector;
+        Node<Type>* nav = this->start;
+        while (nav != this->end) {
+            newVector.push_back(nav->data);
+            nav = nav->next;
+        }
+        newVector.push_back(this->end->data);
+        return newVector;
+    }
 };

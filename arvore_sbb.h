@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 constexpr char VERTICAL = 'v';
 constexpr char HORIZONTAL = 'h';
 
@@ -21,8 +23,8 @@ struct AVLTree {
 };
 
 template <typename TYPE>
-void initialize_tree(AVLTree<TYPE> &a) {
-    a.root = nullptr;
+void initialize_tree(AVLTree<TYPE> &t) {
+    t.root = nullptr;
 }
 
 template <typename TYPE>
@@ -76,6 +78,11 @@ void LR(Node<TYPE> *&root) {
 }
 
 template <typename TYPE>
+int insert(AVLTree<TYPE> &tree, int key, TYPE data) {
+    return insert(tree.root, key, data);
+}
+
+template <typename TYPE>
 int insert(Node<TYPE> *&node, int key, TYPE data) {
     int n = 0;
     if (node == nullptr) {
@@ -126,22 +133,56 @@ int insert(Node<TYPE> *&node, int key, TYPE data) {
 }
 
 template <typename TYPE>
+void in_order(AVLTree<TYPE> tree) {
+    in_order(tree.root);
+}
+
+template <typename TYPE>
 void in_order(Node<TYPE> *node) {
     if (node != nullptr) {
         in_order(node->left);
-        std::cout << node->data;
+        cout << node->data;
         in_order(node->right);
     }
 }
 
-std::string calculate_tree(Node<std::string> *node, Node<std::string> *next) {
+string calculate_tree(Node<string> *node, Node<string> *next) {
     if (next != nullptr) {
         auto left = calculate_tree(node->left, node->left->left);
-        std::string operation = node->data;
+        string operation = node->data;
         auto right = calculate_tree(node->right, node->right->right);
         return left + operation + right;
     }
     return node->data;
+}
+
+template <typename TYPE>
+void print_tree(AVLTree<TYPE> t, bool withKey = false) {
+    print_tree(t.root, withKey);
+}
+
+template <typename TYPE>
+void print_tree(Node<TYPE> *node, bool withKey, const string &prefix = "", bool isLeft = true) {
+    if (node == nullptr) return;
+
+    // Print current node
+    cout << prefix;
+
+    cout << (isLeft ? "├── " : "└── ");
+
+    if (withKey)
+        cout << node->key << endl;
+    else
+        cout << node->data << endl;
+
+    // Recurse left and right
+    bool hasLeft = node->left != nullptr;
+    bool hasRight = node->right != nullptr;
+
+    if (hasLeft || hasRight) {
+        if (hasLeft) print_tree(node->left, withKey, prefix + (isLeft ? "│   " : "    "), true);
+        if (hasRight) print_tree(node->right, withKey, prefix + (isLeft ? "│   " : "    "), false);
+    }
 }
 
 #endif

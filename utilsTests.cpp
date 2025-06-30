@@ -267,11 +267,13 @@ int main() {
     string teste = "3*(8/2*(3*2)+6-2)-1+2";
     // auto tree = AVLTree<string>{};
     // initializeTree(tree);
-    auto new_linked_list = LinkedList<string>();
+    // auto new_linked_list = LinkedList<string>();
     ParenthesisData* parenthesis_data = separate_by_parenthesis(teste);
-    add_characters_to_linked_list(new_linked_list, parenthesis_data);
+    create_sub_trees(parenthesis_data);
+    // in_order(parenthesis_data->tree);
+    print_tree(parenthesis_data->tree);
     // calculate_tree(tree.root, tree.root->left);
     // navigate_inside_parenthesis(parenthesis_data, tree);
-    auto vector_teste = new_linked_list.convert_to_vector();
+    // auto vector_teste = new_linked_list.convert_to_vector();
     return 0;
 }
