@@ -264,16 +264,19 @@ int main() {
     // testSeparateByParenthesis();
     // cout << "All utils tests passed!\n" << endl;
     // string teste = "2+(55/(95-2*77-30+94*(32)*97)/73)";
-    string teste = "3*(8/2*(3*2)+6-2)-1+2";
+    // string teste = "3*(8/2*(3*2)+6-2)-1+2";
     // auto tree = AVLTree<string>{};
     // initializeTree(tree);
     // auto new_linked_list = LinkedList<string>();
-    ParenthesisData* parenthesis_data = separate_by_parenthesis(teste);
-    create_sub_trees(parenthesis_data);
+    // ParenthesisData* parenthesis_data = separate_by_parenthesis(teste);
+    // create_sub_trees(parenthesis_data);
+    // create_tree(parenthesis_data);
     // in_order(parenthesis_data->tree);
-    print_tree(parenthesis_data->tree);
-    // calculate_tree(tree.root, tree.root->left);
-    // navigate_inside_parenthesis(parenthesis_data, tree);
-    // auto vector_teste = new_linked_list.convert_to_vector();
+    // cout << endl << endl;
+    // print_tree(parenthesis_data->tree);
+    // in_order(parenthesis_data->tree);
+    // calculate_tree(parenthesis_data->tree);
+    // cout << "Resultado da expressão '" << teste << "': " << result << endl;
+
     return 0;
 }

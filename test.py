@@ -134,4 +134,4 @@ def separate_by_parenthesis(expression: str, letter: str = "A"):
 if __name__ == "__main__":
     STRING = generate_expression(10, True)
     ordered_operations = separate_by_parenthesis(STRING)
-    print()
+    print(STRING)

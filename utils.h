@@ -131,18 +131,13 @@ vector<string> re_findall(const string &pattern, const string &text) {
     return matches;
 }
 
-// int add_operation(ParenthesisData *parenthesis_data, AVLTree<string> &tree, int &key, string &number, sregex_iterator &iter_numbers, string &expression, string &operation,
 int add_operation(ParenthesisData *&parenthesis_data, int &key, string &number, sregex_iterator &iter_numbers, string &expression, string &operation, int depth, int retFlag = 1) {
-    // insert(tree, key, number);
-    // linked_expression.push_back(Data(number, depth));
-    insert(parenthesis_data->tree, key, number);
+    insert(parenthesis_data->tree, key, Data(number));
     size_t operation_index = iter_numbers->position() + iter_numbers->length();
     if (operation_index >= expression.length()) return 2;
     operation = expression[operation_index];
     ++key;
-    // insert(tree.root, key, operation);
-    // linked_expression.push_back(Data(operation, depth, true));
-    insert(parenthesis_data->tree, key, operation);
+    insert(parenthesis_data->tree, key, Data(operation, true));
     return 1;
 }
 
@@ -151,8 +146,6 @@ bool is_letter(const string &letter) {
     return regex_match(letter, letters_regex);
 }
 
-// int add_characters_to_tree(AVLTree<string> &tree, ParenthesisData *parenthesis_data, int key = 0) {
-// int add_characters_to_linked_list(LinkedList<Data> &linked_expression, ParenthesisData *parenthesis_data, int key = 0, int depth = 0) {
 int create_sub_trees(ParenthesisData *&parenthesis_data, int key = 0, int depth = 0) {
     regex pattern_numbers(R"([a-zA-Z]+|\d+\.?\d*)");
     string expression = parenthesis_data->expression;
@@ -160,8 +153,6 @@ int create_sub_trees(ParenthesisData *&parenthesis_data, int key = 0, int depth 
     sregex_iterator iter_numbers(expression.begin(), expression.end(), pattern_numbers), end;
     string first_number = (first_number_is_negative ? "-" : "") + iter_numbers->str();
     string operation = "";
-    // int ret_flag = add_operation(parenthesis_data, tree, key, first_number, iter_numbers, expression, operation);
-    // int ret_flag = add_operation(linked_expression, key, first_number, iter_numbers, expression, operation, depth);
     int ret_flag = add_operation(parenthesis_data, key, first_number, iter_numbers, expression, operation, depth);
     if (ret_flag == 2) return key;
     ++iter_numbers;
@@ -169,21 +160,13 @@ int create_sub_trees(ParenthesisData *&parenthesis_data, int key = 0, int depth 
     for (key = key; iter_numbers != end; ++key, ++iter_numbers) {
         string number = iter_numbers->str();
         if (is_letter(number)) {
-            // key = add_characters_to_linked_list(linked_expression, parenthesis_data->next_parenthesis[number], key + 1, depth + 1);
             key = create_sub_trees(parenthesis_data->next_parenthesis[number], key + 1, depth + 1);
             ret_flag = add_operation(parenthesis_data, key, number, iter_numbers, expression, operation, depth);
             if (ret_flag == 2) {
                 key++;
                 break;
             }
-            // size_t operation_index = iter_numbers->position() + iter_numbers->length();
-            // if (operation_index >= expression.length()) return 2;
-            // operation = expression[operation_index];
-            // ++key;
-            // insert(parenthesis_data->tree, key, operation);
-            // linked_expression.push_back(Data(operation, depth, true));
         } else {
-            // ret_flag = add_operation(linked_expression, key, number, iter_numbers, expression, operation, depth);
             ret_flag = add_operation(parenthesis_data, key, number, iter_numbers, expression, operation, depth);
             if (ret_flag == 2) {
                 key++;
@@ -230,88 +213,34 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
     if (!current_expression.empty()) new_data->expression += current_expression;
     ExpressionResult new_organized_expression = organize_expression(new_data->expression);
     new_data->expression = organized_operation_to_string(new_organized_expression);
-    // new_data->multiplications = new_organized_expression.multiplications;
-    // new_data->operation = new_organized_expression.operation;
-    // new_data->sums = new_organized_expression.sums;
     return new_data;
 }
 
-// struct NavigateInsideParenthesis {
-//     int last_depth = 0;
-//     Node<string> *node = nullptr;
-// };
+void navigate_inside_tree(Node<Data> *&node, ParenthesisData *parenthesis_data) {
+    if (node != nullptr) {
+        navigate_inside_tree(node->left, parenthesis_data);
+        if (node->left && is_letter(node->left->data.value)) {
+            string letter = node->left->data.value;
+            delete node->left;
+            node->left = parenthesis_data->next_parenthesis[letter]->tree.root;
+            node->left->data.is_parenthesis = true;
+        }
+        if (node->right && is_letter(node->right->data.value)) {
+            string letter = node->right->data.value;
+            delete node->right;
+            node->right = parenthesis_data->next_parenthesis[letter]->tree.root;
+            node->right->data.is_parenthesis = true;
+        }
+        navigate_inside_tree(node->right, parenthesis_data);
+    }
+}
 
-// Node<Data> *next_parenthesis(Node<Data> *&nav, int depth = 0, bool right = true) {
-//     if (right)
-//         while (nav && nav->data.depth == depth) nav = nav->right;
-//     else
-//         while (nav && nav->data.depth == depth) nav = nav->left;
-//     return nav;
-// }
+void navigate_inside_tree(AVLTree<Data> &tree, ParenthesisData *parenthesis_data) { navigate_inside_tree(tree.root, parenthesis_data); }
 
-// Node<Data> *bigger_depth(Node<Data> *&nav, int depth = 0, bool right = true) {
-//     Node<Data> *node = nullptr;
-//     if (right) {
-//         while (nav && nav->data.depth >= depth + 1) {
-//             nav = nav->right;
-//             if (nav->data.depth > node->data.depth) node = nav;
-//         }
-//     } else {
-//         while (nav && nav->data.depth >= depth + 1) {
-//             nav = nav->left;
-//             if (nav->data.depth > node->data.depth) node = nav;
-//         }
-//     }
-//     return node;
-// }
-
-// int navigate_inside_parenthesis(Node<Data> *&last_left, Node<Data> *&last_right, int depth = 0, bool direction = true) {
-//     bool has_visited_left = false, has_visited_right = false;
-//     Node<Data> *nav = next_parenthesis(last_left, depth, direction);
-//     Node<Data> *node = bigger_depth(nav, depth, direction);
-
-//     // Node<Data> *inside_last_left = nullptr, *inside_last_right = nullptr;
-//     Node<Data> *left = nullptr, *right = nullptr;
-//     while (has_visited_left && has_visited_right) {
-//         if (!left && !right) left = node->left, right = node->right;
-//         if (left == last_left) has_visited_left = true;
-//         if (right == last_right) has_visited_right = true;
-//         auto left_operation = Operation();
-//         auto right_operation = Operation();
-//         auto selected_operation = Operation();
-//         auto left_number = left->left->data.value;
-//         auto right_number = left->right->data.value;
-//         string selected_number_l = "";
-//         string selected_number_r = "";
-//         if (!has_visited_left) {
-//             if (left->data.operation) left_operation = left->data.get_operation();
-//         }
-//         if (!has_visited_right) {
-//             if (right->data.operation) right_operation = right->data.get_operation();
-//         }
-//         if (!has_visited_left && !has_visited_right) {
-//             int l_depth = left->data.depth, n_depth = node->data.depth, r_depth = right->data.depth;
-//             if (l_depth == n_depth && r_depth == n_depth) {  // Choice
-//                 if (left_operation > right_operation) {
-//                     selected_number_l = left_number;
-//                     selected_number_r = node->data.value;
-//                     left = left->left->left;
-//                 } else if (left_operation <= right_operation) {
-//                     selected_number_l = node->data.value;
-//                     selected_number_r = right_number;
-//                     left = right->right->right;
-//                 }
-//             } else if (l_depth == n_depth && r_depth < n_depth) {  // Go to left
-//                 selected_number_l = left_number;
-//                 selected_number_r = node->data.value;
-//                 left = left->left->left;
-//             } else if (l_depth < n_depth && r_depth == n_depth) {  // Go to right
-//                 selected_number_l = node->data.value;
-//                 selected_number_r = right_number;
-//                 left = right->right->right;
-//             } else if (l_depth > n_depth && r_depth == n_depth) {  // Stop here search left first
-//             } else if (l_depth == n_depth && r_depth > n_depth) {  // Stop here search right first
-//             }
-//         }
-//     }
-// }
+void create_tree(ParenthesisData *&parenthesis_data) {
+    if (parenthesis_data->next_parenthesis.empty()) return;
+    for (auto &[_, second] : parenthesis_data->next_parenthesis) {
+        create_tree(second);
+    }
+    navigate_inside_tree(parenthesis_data->tree, parenthesis_data);
+}

@@ -2,8 +2,91 @@
 #define SBB_TREE_HPP
 
 #include <iostream>
-
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
 using namespace std;
+
+struct Operation {
+    string operation;
+
+    // Construtores
+    Operation() : operation("") {}
+    Operation(const string &op) : operation(op) {}
+
+    bool operator==(const Operation &other) const { return operation == other.operation; }
+
+    bool operator<(const Operation &other) const {
+        unordered_map<string, int> priority = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
+        return priority[operation] < priority[other.operation];
+    }
+
+    bool operator>(const Operation &other) const {
+        unordered_map<string, int> priority = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
+        return priority[operation] > priority[other.operation];
+    }
+
+    bool operator>=(const Operation &other) const {
+        unordered_map<string, int> priority = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
+        return priority[operation] >= priority[other.operation];
+    }
+
+    bool operator<=(const Operation &other) const {
+        unordered_map<string, int> priority = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
+        return priority[operation] <= priority[other.operation];
+    }
+
+    // Function to apply the operation to two numbers
+    double apply(double a, double b) const {
+        if (operation == "+") return a + b;
+        if (operation == "-") return a - b;
+        if (operation == "*") return a * b;
+        if (operation == "/") {
+            if (b == 0) throw invalid_argument("Division by zero");
+            return a / b;
+        }
+        throw invalid_argument("Unknown operation: " + operation);
+    }
+    double apply(string a, string b) const {
+        if (operation == "+") return stod(a) + stod(b);
+        if (operation == "-") return stod(a) - stod(b);
+        if (operation == "*") return stod(a) * stod(b);
+        if (operation == "/") {
+            if (b == "0") throw invalid_argument("Division by zero");
+            return stod(a) / stod(b);
+        }
+        throw invalid_argument("Unknown operation: " + operation);
+    }
+
+    double apply(double a, string b) const {
+        if (operation == "+") return a + stod(b);
+        if (operation == "-") return a - stod(b);
+        if (operation == "*") return a * stod(b);
+        if (operation == "/") {
+            if (b == "0") throw invalid_argument("Division by zero");
+            return a / stod(b);
+        }
+        throw invalid_argument("Unknown operation: " + operation);
+    }
+};
+
+struct Data {
+    string value;
+    bool is_parenthesis;
+    bool operation;
+
+    // Construtores
+    Data() : value(""), operation(false) {}
+    Data(const string &val, bool is_op = false, bool is_parenthesis = false) : value(val), is_parenthesis(is_parenthesis), operation(is_op) {}
+
+    Operation get_operation() { return Operation(this->value); }
+
+    // Operator overload for cout
+    friend ostream &operator<<(ostream &os, const Data &data) {
+        os << data.value;
+        return os;
+    }
+};
 
 constexpr char VERTICAL = 'v';
 constexpr char HORIZONTAL = 'h';
@@ -146,14 +229,37 @@ void in_order(Node<TYPE> *node) {
     }
 }
 
-string calculate_tree(Node<string> *node, Node<string> *next) {
-    if (next != nullptr) {
-        auto left = calculate_tree(node->left, node->left->left);
-        string operation = node->data;
-        auto right = calculate_tree(node->right, node->right->right);
-        return left + operation + right;
+void calculate_tree(Node<Data> *node, double &total, Operation operation, bool has_operation = false) {
+    if (node != nullptr) {
+        // auto op = Operation();
+        // if (node->data.is_parenthesis) {
+        //     double new_total = 0;
+        //     calculate_tree(node, total, operation);
+        //     node->data.value = new_total;
+        // }
+        // calculate_tree(node->left);
+        // if (!total)
+        //     total = stod(node->data.value);
+        // else if (node->data.operation)
+        //     op = Operation(node->data.value);
+        // else if (has_operation)
+        //     total = op.apply(total, node->data.value);
+        // calculate_tree(node->right);
     }
-    return node->data;
+}
+
+void calculate_tree(Node<Data> *node) {
+    // if (node != nullptr) {
+    //     calculate_tree(node->left);
+
+    //     calculate_tree(node->right);
+    // }
+}
+
+void calculate_tree(AVLTree<Data> tree) {
+    // double total = 0;
+    // auto operation = Operation();
+    // calculate_tree(tree.root, total, operation);
 }
 
 template <typename TYPE>
