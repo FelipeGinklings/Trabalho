@@ -199,6 +199,8 @@ void testOrganizedOperationToString() {
 }
 
 void testSeparateByParenthesis() {
+    auto tree = AVLTree<string>{};
+    initializeTree(tree);
     // Test simple expression without parentheses
     ParenthesisData* result1 = separate_by_parenthesis("1+2");
     assert(result1->expression == "1+2");
@@ -260,8 +262,11 @@ int main() {
     // testOrganizeExpression();
     // testOrganizedOperationToString();
     // testSeparateByParenthesis();
-    cout << "All utils tests passed!\n" << endl;
+    // cout << "All utils tests passed!\n" << endl;
     string teste = "2+(55/(95-2*77-30+94*(32)*97)/73)";
+    auto tree = AVLTree<string>{};
+    initializeTree(tree);
     ParenthesisData* parenthesis_data = separate_by_parenthesis(teste);
+    add_characters_to_tree(tree, parenthesis_data);
     return 0;
 }

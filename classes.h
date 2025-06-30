@@ -45,14 +45,14 @@ struct ParenthesisData {
     string multiplications;
     string operation;
     string sums;
-    AVLTree<string> tree{};
+    // AVLTree<string> tree{};
     unordered_map<string, ParenthesisData*> next_parenthesis;
 
     // Construtores
-    ParenthesisData() : expression(""), multiplications(""), operation(""), sums("") { initializeTree(tree); }
+    ParenthesisData() : expression(""), multiplications(""), operation(""), sums("") {}
     ParenthesisData(const string& expr, const string& mult = "", const string& op = "", const string& sum = "")
         : expression(expr), multiplications(mult), operation(op), sums(sum) {
-        initializeTree(tree);
+        // initializeTree(tree);
     }
 };
 

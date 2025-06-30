@@ -130,41 +130,50 @@ vector<string> re_findall(const string &pattern, const string &text) {
     return matches;
 }
 
-void add_characters_to_tree(AVLTree<string> &tree, const string &expression) {
-    std::cout << expression << std::endl;
-    regex pattern_numbers(R"([a-zA-Z]+|\d+\.?\d*)");
-    bool first_number_is_negative = expression[0] == '-';
-    sregex_iterator iter_numbers(expression.begin(), expression.end(), pattern_numbers);
-    sregex_iterator end;
-    string operation = "";
-    string number = iter_numbers->str();
-    insert(tree.root, 0, (first_number_is_negative ? "-" : "") + number);
+int add_operation(AVLTree<string> &tree, int &key, string &number, sregex_iterator &iter_numbers, string &expression, string &operation, int retFlag = 1) {
+    insert(tree.root, key, number);
     size_t operation_index = iter_numbers->position() + iter_numbers->length();
+    if (operation_index >= expression.length()) return 2;
     operation = expression[operation_index];
-    insert(tree.root, 1, operation);
+    ++key;
+    insert(tree.root, key, operation);
+    return 1;
+}
+
+bool is_letter(const string &letter) {
+    regex letters_regex(R"([a-zA-Z]+)");
+    return regex_match(letter, letters_regex);
+}
+
+int add_characters_to_tree(AVLTree<string> &tree, ParenthesisData *parenthesisData, int key = 0) {
+    regex pattern_numbers(R"([a-zA-Z]+|\d+\.?\d*)");
+    string expression = parenthesisData->expression;
+    bool first_number_is_negative = expression[0] == '-';
+    sregex_iterator iter_numbers(expression.begin(), expression.end(), pattern_numbers), end;
+    string number = (first_number_is_negative ? "-" : "") + iter_numbers->str();
+    string operation = "";
+    add_operation(tree, key, number, iter_numbers, expression, operation);
     ++iter_numbers;
-    for (int i = 2; iter_numbers != end; ++i, ++iter_numbers) {
+    key++;
+    for (key = key; iter_numbers != end; ++key, ++iter_numbers) {
         string number = iter_numbers->str();
-        size_t operation_index = iter_numbers->position() + iter_numbers->length();
-        insert(tree.root, i, number);
-        if (operation_index < expression.length()) {
-            operation = expression[operation_index];
-            i++;
-            insert(tree.root, i, operation);
+        if (is_letter(number))
+            key = add_characters_to_tree(tree, parenthesisData->next_parenthesis[number], key);
+        else {
+            int retFlag = add_operation(tree, key, number, iter_numbers, expression, operation);
+            if (retFlag == 2) break;
         }
     }
+    return key;
 }
 
 ParenthesisData *separate_by_parenthesis(const string &expression, const string &letter = "A", int multiplier = 1) {
-    if (letter == "Z") multiplier++;
-    string current_expression = "";
     ParenthesisData *new_data = new ParenthesisData();
+    string current_expression = "", next_letter = letter;
     int level = 0;
-    string next_letter = letter;
 
     for (size_t index = 0; index < expression.length(); index++) {
         char ch = expression[index];
-
         if (ch == '(') {
             if (!current_expression.empty() && level == 0) {
                 new_data->expression += current_expression + next_letter;
@@ -179,9 +188,9 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
             }
         } else if (ch == ')') {
             if (!current_expression.empty() && level == 1) {
-                ParenthesisData *next_parenthesis = separate_by_parenthesis(current_expression);
-                new_data->next_parenthesis[next_letter] = next_parenthesis;
+                new_data->next_parenthesis[next_letter] = separate_by_parenthesis(current_expression);
                 next_letter = get_next_letter(next_letter, multiplier);
+                if (next_letter == "Z") multiplier++;
                 current_expression = "";
                 level--;
                 continue;
@@ -191,15 +200,13 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
         current_expression += ch;
     }
 
-    if (!current_expression.empty()) {
-        new_data->expression += current_expression;
-    }
+    if (!current_expression.empty()) new_data->expression += current_expression;
 
+    cout << new_data->expression << endl << endl;
     ExpressionResult new_organized_expression = organize_expression(new_data->expression);
     new_data->expression = organized_operation_to_string(new_organized_expression);
     new_data->multiplications = new_organized_expression.multiplications;
     new_data->operation = new_organized_expression.operation;
     new_data->sums = new_organized_expression.sums;
-    add_characters_to_tree(new_data->tree, new_data->expression);
     return new_data;
 }
