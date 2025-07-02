@@ -348,34 +348,53 @@ ParenthesisData *separate_by_parenthesis(const string &expression, ParenthesisDa
     ParenthesisData *new_data = parenthesis_data;
     if (new_data == nullptr) new_data = new ParenthesisData();
     string current_expression = "", next_letter = letter;
-    int level = 0;
 
-    for (size_t index = 0; index < expression.length(); index++) {
-        char ch = expression[index];
-        if (ch == '(') {
-            if (!current_expression.empty() && level == 0) {
-                new_data->expression += current_expression + next_letter;
-                current_expression = "";
-                level++;
-                continue;
+    size_t start = 0;
+    while (start < expression.length()) {
+        size_t first_paren = expression.find('(', start);
+
+        if (first_paren == string::npos) {
+            // No more parentheses, add remaining expression
+            if (start < expression.length()) {
+                current_expression += expression.substr(start);
             }
-            level++;
-            if (index == 0) {
-                new_data->expression += letter;
-                continue;
-            }
-        } else if (ch == ')') {
-            if (!current_expression.empty() && level == 1) {
-                new_data->next_parenthesis[next_letter] = separate_by_parenthesis(current_expression);
-                next_letter = get_next_letter(next_letter, multiplier);
-                if (next_letter == "Z") multiplier++;
-                current_expression = "";
-                level--;
-                continue;
-            }
-            level--;
+            break;
         }
-        current_expression += ch;
+
+        // Add content before parenthesis
+        if (first_paren > start) {
+            current_expression += expression.substr(start, first_paren - start);
+        }
+
+        // Find matching closing parenthesis
+        int level = 1;
+        size_t last_paren = first_paren + 1;
+        while (last_paren < expression.length() && level > 0) {
+            if (expression[last_paren] == '(')
+                level++;
+            else if (expression[last_paren] == ')')
+                level--;
+            last_paren++;
+        }
+
+        if (level > 0) {
+            // Unmatched parenthesis, treat as regular character
+            current_expression += expression.substr(first_paren, 1);
+            start = first_paren + 1;
+            continue;
+        }
+
+        // Extract content inside parentheses
+        string inside_parentheses = expression.substr(first_paren + 1, last_paren - first_paren - 2);
+
+        // Add letter placeholder and create sub-parenthesis
+        new_data->expression += current_expression + next_letter;
+        new_data->next_parenthesis[next_letter] = separate_by_parenthesis(inside_parentheses);
+
+        current_expression = "";
+        next_letter = get_next_letter(next_letter, multiplier);
+        if (next_letter == "Z") multiplier++;
+        start = last_paren;
     }
 
     if (!current_expression.empty()) new_data->expression += current_expression;

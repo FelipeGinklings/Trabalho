@@ -8,7 +8,7 @@
 using namespace std;
 
 int main() {
-    string generated_expression = generateExpression(100);
+    string generated_expression = generateExpression(10);
     cout << "Generated expression: " << generated_expression << endl;
     ParenthesisData* parenthesis_data = separate_by_parenthesis(generated_expression);
     create_sub_trees(parenthesis_data);
