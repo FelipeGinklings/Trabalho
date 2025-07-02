@@ -149,7 +149,7 @@ bool areEqual(vector<string> &strings, string &stringForTest) {
     return stringForTest.length() == mergedString.length();
 }
 
-string generateExpression(int size, bool withParenthesis = false, bool withFloatingNumbers = false, int minInt = 1, int maxInt = 99, double minFloat = 1.0,
+string generateExpression(int size, bool withParenthesis = false, bool withFloatingNumbers = false, int minInt = 10, int maxInt = 99, double minFloat = 10.0,
                           double maxFloat = 99.9) {
     if (size <= 0) return "";
 
@@ -179,9 +179,8 @@ string generateExpression(int size, bool withParenthesis = false, bool withFloat
     }
 
     if (withParenthesis && size >= 3) {
-        int numParentheses = min(size / 2, 3);
-        uniform_int_distribution<> dist(0, 1);
-
+        int numParentheses = min(size / 3, 2);
+        
         for (int p = 0; p < numParentheses; p++) {
             vector<int> openPositions, closePositions;
 
@@ -195,13 +194,13 @@ string generateExpression(int size, bool withParenthesis = false, bool withFloat
                 }
             }
 
-            if (openPositions.size() >= 2 && closePositions.size() >= 2) {
-                uniform_int_distribution<> openDist(0, openPositions.size() - 2);
+            if (openPositions.size() >= 3 && closePositions.size() >= 3) {
+                uniform_int_distribution<> openDist(0, openPositions.size() - 3);
                 int openPos = openPositions[openDist(gen)];
 
                 vector<int> validClosePos;
                 for (int pos : closePositions) {
-                    if (pos > openPos + 2) {
+                    if (pos > openPos + 4) { // Ensure at least 3 numbers inside
                         validClosePos.push_back(pos);
                     }
                 }
@@ -210,7 +209,12 @@ string generateExpression(int size, bool withParenthesis = false, bool withFloat
                     uniform_int_distribution<> closeDist(0, validClosePos.size() - 1);
                     int closePos = validClosePos[closeDist(gen)];
 
-                    expression = expression.substr(0, openPos) + "(" + expression.substr(openPos, closePos - openPos) + ")" + expression.substr(closePos);
+                    // Check if adding parentheses would create nested unnecessary parentheses
+                    string inside = expression.substr(openPos, closePos - openPos);
+                    if (inside.find('(') == string::npos || 
+                        (inside.front() != '(' || inside.back() != ')')) {
+                        expression = expression.substr(0, openPos) + "(" + inside + ")" + expression.substr(closePos);
+                    }
                 }
             }
         }
