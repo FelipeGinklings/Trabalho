@@ -8,15 +8,14 @@
 using namespace std;
 
 int main() {
-    // string generated_expression = generateExpression(10);
-    string generated_expression = "1*5*2-4/9/3/8/8/2-1";
+    string generated_expression = generateExpression(100);
     cout << "Generated expression: " << generated_expression << endl;
     ParenthesisData* parenthesis_data = separate_by_parenthesis(generated_expression);
     create_sub_trees(parenthesis_data);
     create_tree(parenthesis_data);
-    // in_order(parenthesis_data->tree);
+    in_order(parenthesis_data->tree);
     cout << endl;
-    // print_tree(parenthesis_data->tree);
+    print_tree(parenthesis_data->tree);
     const double result = calculate_tree(parenthesis_data->tree);
     cout << "Resultado da expressão '" << generated_expression << "': " << result << endl;
 
