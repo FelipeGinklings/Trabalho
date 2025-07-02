@@ -325,8 +325,14 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
     return new_data;
 }
 
+bool is_mul(const string &value) { return value == "*" || value == "/"; }
+
 void navigate_inside_tree(Node<Data> *&node, ParenthesisData *parenthesis_data) {
     if (node != nullptr) {
+        if (is_mul(node->data.value)) {
+            cout << "Multiplication found: " << node->data.value << endl;
+            node->data.is_mul = true;
+        }
         navigate_inside_tree(node->left, parenthesis_data);
         if (node->left) {
             if (is_letter(node->left->data.value)) {

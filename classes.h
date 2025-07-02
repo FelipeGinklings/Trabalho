@@ -60,35 +60,51 @@ struct Operation {
         }
         throw invalid_argument("Unknown operation: " + operation);
     }
+    string _convert(double value, int precision = 17) const {
+        ostringstream oss;
+        oss << setprecision(precision) << value;
+        return oss.str();
+    }
+
+    double _convert(const string &str) const {
+        try {
+            return stod(str);
+        } catch (const invalid_argument &e) {
+            throw invalid_argument("Invalid double string: " + str);
+        } catch (const out_of_range &e) {
+            throw out_of_range("Double out of range: " + str);
+        }
+    }
+
     double apply(string a, string b) const {
-        if (operation == "+") return stod(a) + stod(b);
-        if (operation == "-") return stod(a) - stod(b);
-        if (operation == "*") return stod(a) * stod(b);
+        if (operation == "+") return this->_convert(a) + this->_convert(b);
+        if (operation == "-") return this->_convert(a) - this->_convert(b);
+        if (operation == "*") return this->_convert(a) * this->_convert(b);
         if (operation == "/") {
             if (b == "0") throw invalid_argument("Division by zero");
-            return stod(a) / stod(b);
+            return this->_convert(a) / this->_convert(b);
         }
         throw invalid_argument("Unknown operation: " + operation);
     }
 
     double apply(double a, string b) const {
-        if (operation == "+") return a + stod(b);
-        if (operation == "-") return a - stod(b);
-        if (operation == "*") return a * stod(b);
+        if (operation == "+") return a + this->_convert(b);
+        if (operation == "-") return a - this->_convert(b);
+        if (operation == "*") return a * this->_convert(b);
         if (operation == "/") {
             if (b == "0") throw invalid_argument("Division by zero");
-            return a / stod(b);
+            return a / this->_convert(b);
         }
         throw invalid_argument("Unknown operation: " + operation);
     }
 
     double apply(string a, double b) const {
-        if (operation == "+") return stod(a) + b;
-        if (operation == "-") return stod(a) - b;
-        if (operation == "*") return stod(a) * b;
+        if (operation == "+") return this->_convert(a) + b;
+        if (operation == "-") return this->_convert(a) - b;
+        if (operation == "*") return this->_convert(a) * b;
         if (operation == "/") {
             if (b == 0) throw invalid_argument("Division by zero");
-            return stod(a) / b;
+            return this->_convert(a) / b;
         }
         throw invalid_argument("Unknown operation: " + operation);
     }
@@ -97,10 +113,11 @@ struct Operation {
 struct Data {
     string value;
     bool is_parenthesis;
+    bool is_mul;
     bool operation;
 
-    Data() : value(""), operation(false) {}
-    Data(const string &val, bool is_op = false, bool is_parenthesis = false) : value(val), is_parenthesis(is_parenthesis), operation(is_op) {}
+    Data() : value(""), is_parenthesis(false), is_mul(false), operation(false) {}
+    Data(const string &val, bool is_op = false, bool is_parenthesis = false, bool is_mul = false) : value(val), is_parenthesis(is_parenthesis), is_mul(is_mul), operation(is_op) {}
 
     Operation get_operation() { return Operation(this->value); }
 
