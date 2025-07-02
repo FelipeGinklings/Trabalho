@@ -1,8 +1,11 @@
 
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <random>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -11,8 +14,134 @@
 
 using namespace std;
 
-bool opLv1(const char &c) { return c == '-' || c == '+'; }
-bool opLv2(const char &c) { return c == '*' || c == '/'; }
+constexpr char VERTICAL = 'v';
+constexpr char HORIZONTAL = 'h';
+
+template <typename TYPE>
+void initialize_tree(AVLTree<TYPE> &t) {
+    t.root = nullptr;
+}
+
+template <typename TYPE>
+void LL(Node<TYPE> *&root) {
+    auto m = root;
+    auto h = m->left;
+    m->left = h->right;
+    h->orientL = VERTICAL;
+    m->orientL = VERTICAL;
+    h->right = m;
+    root = h;
+}
+
+template <typename TYPE>
+void RR(Node<TYPE> *&root) {
+    auto f = root;
+    auto h = f->right;
+    f->right = h->left;
+    h->orientR = VERTICAL;
+    f->orientR = VERTICAL;
+    h->left = f;
+    root = h;
+}
+
+template <typename TYPE>
+void RL(Node<TYPE> *&root) {
+    auto f = root;
+    auto m = f->right;
+    auto h = m->left;
+    m->orientL = VERTICAL;
+    f->orientR = VERTICAL;
+    f->right = h->left;
+    m->left = h->right;
+    h->right = m;
+    h->left = f;
+    root = h;
+}
+
+template <typename TYPE>
+void LR(Node<TYPE> *&root) {
+    auto m = root;
+    auto f = m->left;
+    auto h = f->right;
+    f->orientR = VERTICAL;
+    m->orientL = VERTICAL;
+    f->right = h->left;
+    m->left = h->right;
+    h->right = m;
+    h->left = f;
+    root = h;
+}
+
+template <typename TYPE>
+int insert(AVLTree<TYPE> &tree, int key, TYPE data) {
+    return insert(tree.root, key, data);
+}
+
+template <typename TYPE>
+int insert(Node<TYPE> *&node, int key, TYPE data) {
+    int n = 0;
+    if (node == nullptr) {
+        node = new Node<TYPE>;
+        node->data = data;
+        node->key = key;
+        node->left = nullptr;
+        node->right = nullptr;
+        return 1;
+    }
+    if (key > node->key) {
+        n = insert(node->right, key, data);
+        if (n == 1) {
+            node->orientR = HORIZONTAL;
+            n++;
+        } else {
+            if (n == 2 && node->orientR == HORIZONTAL) {
+                n = 1;
+                if (node->right->orientR == HORIZONTAL) {
+                    RR(node);
+                } else {
+                    RL(node);
+                }
+            } else {
+                n = 0;
+            }
+        }
+    }
+    if (key < node->key) {
+        n = insert(node->left, key, data);
+        if (n == 1) {
+            node->orientL = HORIZONTAL;
+            n++;
+        } else {
+            if (n == 2 && node->orientL == HORIZONTAL) {
+                n = 1;
+                if (node->left->orientL == HORIZONTAL) {
+                    LL(node);
+                } else {
+                    LR(node);
+                }
+            } else {
+                n = 0;
+            }
+        }
+    }
+    return n;
+}
+
+string convert(double value, int precision = 17) {
+    ostringstream oss;
+    oss << setprecision(precision) << value;
+    return oss.str();
+}
+
+double convert(const string &str) {
+    try {
+        return stod(str);
+    } catch (const invalid_argument &e) {
+        throw invalid_argument("Invalid double string: " + str);
+    } catch (const out_of_range &e) {
+        throw out_of_range("Double out of range: " + str);
+    }
+}
 
 bool areEqual(vector<string> &strings, string &stringForTest) {
     string mergedString = "";
@@ -102,21 +231,6 @@ ExpressionResult organize_expression(const string &expression_str) {
 
 string organized_operation_to_string(ExpressionResult organized_operation) {
     return organized_operation.multiplications + organized_operation.operation + organized_operation.sums;
-}
-
-vector<string> re_findall(const string &pattern, const string &text) {
-    regex re(pattern);
-    sregex_iterator it(text.begin(), text.end(), re);
-    sregex_iterator end;
-
-    vector<string> matches;
-    while (it != end) {
-        smatch match = *it;
-        matches.push_back(match.str());
-        ++it;
-    }
-
-    return matches;
 }
 
 int add_operation(ParenthesisData *&parenthesis_data, int &key, string &number, sregex_iterator &iter_numbers, string &expression, string &operation, int depth, int retFlag = 1) {
@@ -236,10 +350,47 @@ void navigate_inside_tree(Node<Data> *&node, ParenthesisData *parenthesis_data) 
 
 void navigate_inside_tree(AVLTree<Data> &tree, ParenthesisData *parenthesis_data) { navigate_inside_tree(tree.root, parenthesis_data); }
 
-void create_tree(ParenthesisData *&parenthesis_data) {
-    if (parenthesis_data->next_parenthesis.empty()) return;
-    for (auto &[_, second] : parenthesis_data->next_parenthesis) {
-        create_tree(second);
+template <typename TYPE>
+void in_order(AVLTree<TYPE> tree) {
+    in_order(tree.root);
+}
+
+template <typename TYPE>
+void in_order(Node<TYPE> *node) {
+    if (node != nullptr) {
+        in_order(node->left);
+        cout << node->data;
+        in_order(node->right);
     }
-    navigate_inside_tree(parenthesis_data->tree, parenthesis_data);
+}
+
+template <typename TYPE>
+void print_tree(AVLTree<TYPE> t, bool withKey = false) {
+    print_tree(t.root, withKey);
+}
+
+// template <typename Data>
+void print_tree(Node<Data> *node, bool withKey, const string &prefix = "", bool isLeft = true) {
+    if (node == nullptr) return;
+
+    // Print current node
+    cout << prefix;
+
+    cout << (isLeft ? "├── " : "└── ");
+
+    if (withKey)
+        cout << node->key << endl;
+    else if (node->data.is_parenthesis)
+        cout << "(" << node->data.value << ")" << endl;
+    else
+        cout << node->data << endl;
+
+    // Recurse left and right
+    bool hasLeft = node->left != nullptr;
+    bool hasRight = node->right != nullptr;
+
+    if (hasLeft || hasRight) {
+        if (hasLeft) print_tree(node->left, withKey, prefix + (isLeft ? "│   " : "    "), true);
+        if (hasRight) print_tree(node->right, withKey, prefix + (isLeft ? "│   " : "    "), false);
+    }
 }

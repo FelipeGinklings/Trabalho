@@ -1,22 +1,22 @@
+#include <cassert>
 #include <iostream>
+#include <string>
+#include <vector>
 
-#include "arvore.h"
+#include "arvore_sbb.h"
 
 using namespace std;
 
 int main() {
-    // std::cout << "Result: " << result << std::endl;  // Output: 36
-    // for (int i = 2; i <= 20; i++) {
-    // for (int j = 0; j < 20; j++) {
-    //     string genString = generateExpression(10);
-    //     string hasOperation = endInOperation(genString);
-    //     cout << genString << endl;
-    //     auto [operations, firstLv1] = separateOperations(genString);
-    //     auto newSubTree = createSubTree(operations, 0, firstLv1);
-    //     inOrder(newSubTree);
-    //     std::cout << std::endl;
-    // }
-    // }
+    string main_str = "2+(55/(95-2*77-30+94*(32)*97)/73)";
+    ParenthesisData* parenthesis_data = separate_by_parenthesis(main_str);
+    create_sub_trees(parenthesis_data);
+    create_tree(parenthesis_data);
+    in_order(parenthesis_data->tree);
+    cout << endl;
+    print_tree(parenthesis_data->tree);
+    const double result = calculate_tree(parenthesis_data->tree);
+    cout << "Resultado da expressão '" << main_str << "': " << result << endl;
 
     return 0;
 }
