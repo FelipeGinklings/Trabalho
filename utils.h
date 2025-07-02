@@ -149,21 +149,71 @@ bool areEqual(vector<string> &strings, string &stringForTest) {
     return stringForTest.length() == mergedString.length();
 }
 
-string generateExpression(int size) {
+string generateExpression(int size, bool withParenthesis = false, bool withFloatingNumbers = false, int minInt = 1, int maxInt = 99, double minFloat = 1.0,
+                          double maxFloat = 99.9) {
     if (size <= 0) return "";
 
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution<> numDist(1, 9);
+    uniform_int_distribution<> numDist(minInt, maxInt);
+    uniform_real_distribution<> floatDist(minFloat, maxFloat);
     uniform_int_distribution<> opDist(0, 3);
+    uniform_int_distribution<> typeDist(0, 1);  // 0 for int, 1 for float
 
-    string expression = to_string(numDist(gen));
+    string expression;
+    if (withFloatingNumbers && typeDist(gen)) {
+        expression = convert(floatDist(gen), 1);
+    } else {
+        expression = to_string(numDist(gen));
+    }
 
     char operators[] = {'+', '-', '*', '/'};
 
     for (int i = 1; i < size; i++) {
         expression += operators[opDist(gen)];
-        expression += to_string(numDist(gen));
+        if (withFloatingNumbers && typeDist(gen)) {
+            expression += convert(floatDist(gen), 1);
+        } else {
+            expression += to_string(numDist(gen));
+        }
+    }
+
+    if (withParenthesis && size >= 3) {
+        int numParentheses = min(size / 2, 3);
+        uniform_int_distribution<> dist(0, 1);
+
+        for (int p = 0; p < numParentheses; p++) {
+            vector<int> openPositions, closePositions;
+
+            // Find all number positions
+            for (int i = 0; i < expression.length(); i++) {
+                if ((isdigit(expression[i]) || expression[i] == '.') && (i == 0 || (!isdigit(expression[i - 1]) && expression[i - 1] != '.'))) {
+                    openPositions.push_back(i);
+                }
+                if ((isdigit(expression[i]) || expression[i] == '.') && (i == expression.length() - 1 || (!isdigit(expression[i + 1]) && expression[i + 1] != '.'))) {
+                    closePositions.push_back(i + 1);
+                }
+            }
+
+            if (openPositions.size() >= 2 && closePositions.size() >= 2) {
+                uniform_int_distribution<> openDist(0, openPositions.size() - 2);
+                int openPos = openPositions[openDist(gen)];
+
+                vector<int> validClosePos;
+                for (int pos : closePositions) {
+                    if (pos > openPos + 2) {
+                        validClosePos.push_back(pos);
+                    }
+                }
+
+                if (!validClosePos.empty()) {
+                    uniform_int_distribution<> closeDist(0, validClosePos.size() - 1);
+                    int closePos = validClosePos[closeDist(gen)];
+
+                    expression = expression.substr(0, openPos) + "(" + expression.substr(openPos, closePos - openPos) + ")" + expression.substr(closePos);
+                }
+            }
+        }
     }
 
     return expression;
