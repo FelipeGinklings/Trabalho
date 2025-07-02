@@ -78,36 +78,24 @@ ExpressionResult organize_expression(const string &expression_str) {
     sregex_iterator iter(expression_str.begin(), expression_str.end(), pattern);
     sregex_iterator end;
 
-    for (; iter != end; ++iter) {
-        multiplications.push_back(iter->str());
-    }
+    for (; iter != end; ++iter) multiplications.push_back(iter->str());
 
-    if (multiplications.empty()) {
-        return ExpressionResult("", "", expression_str);
-    }
+    if (multiplications.empty()) return ExpressionResult("", "", expression_str);
 
     string sums_str = expression_str;
     for (const string &mul : multiplications) {
         size_t pos = sums_str.find(mul);
-        if (pos != string::npos) {
-            sums_str.replace(pos, mul.length(), "");
-        }
+        if (pos != string::npos) sums_str.replace(pos, mul.length(), "");
     }
 
     string multiplications_str = "";
-    for (const string &mul : multiplications) {
-        multiplications_str += mul;
-    }
+    for (const string &mul : multiplications) multiplications_str += mul;
 
     bool start_with_plus = multiplications_str.length() > 0 && multiplications_str[0] == '+';
 
-    if (sums_str == "") {
-        return ExpressionResult(start_with_plus ? multiplications_str.substr(1) : multiplications_str, "", "");
-    }
+    if (sums_str == "") return ExpressionResult(start_with_plus ? multiplications_str.substr(1) : multiplications_str, "", "");
 
-    if (!(sums_str[0] == '+' || sums_str[0] == '-')) {
-        sums_str = "+" + sums_str;
-    }
+    if (!(sums_str[0] == '+' || sums_str[0] == '-')) sums_str = "+" + sums_str;
 
     return ExpressionResult(start_with_plus ? multiplications_str.substr(1) : multiplications_str, string(1, sums_str[0]), sums_str.substr(1));
 }
@@ -153,8 +141,15 @@ int create_sub_trees(ParenthesisData *&parenthesis_data, int key = 0, int depth 
     sregex_iterator iter_numbers(expression.begin(), expression.end(), pattern_numbers), end;
     string first_number = (first_number_is_negative ? "-" : "") + iter_numbers->str();
     string operation = "";
-    int ret_flag = add_operation(parenthesis_data, key, first_number, iter_numbers, expression, operation, depth);
-    if (ret_flag == 2) return key;
+    int ret_flag = 1;
+    if (is_letter(first_number)) {
+        key = create_sub_trees(parenthesis_data->next_parenthesis[first_number], key + 1, depth + 1);
+        ret_flag = add_operation(parenthesis_data, key, first_number, iter_numbers, expression, operation, depth);
+        if (ret_flag == 2) return key;
+    } else {
+        ret_flag = add_operation(parenthesis_data, key, first_number, iter_numbers, expression, operation, depth);
+        if (ret_flag == 2) return key;
+    }
     ++iter_numbers;
     key++;
     for (key = key; iter_numbers != end; ++key, ++iter_numbers) {
@@ -219,17 +214,21 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
 void navigate_inside_tree(Node<Data> *&node, ParenthesisData *parenthesis_data) {
     if (node != nullptr) {
         navigate_inside_tree(node->left, parenthesis_data);
-        if (node->left && is_letter(node->left->data.value)) {
-            string letter = node->left->data.value;
-            delete node->left;
-            node->left = parenthesis_data->next_parenthesis[letter]->tree.root;
-            node->left->data.is_parenthesis = true;
+        if (node->left) {
+            if (is_letter(node->left->data.value)) {
+                string letter = node->left->data.value;
+                delete node->left;
+                parenthesis_data->next_parenthesis[letter]->tree.root->data.is_parenthesis = true;
+                node->left = parenthesis_data->next_parenthesis[letter]->tree.root;
+            }
         }
-        if (node->right && is_letter(node->right->data.value)) {
-            string letter = node->right->data.value;
-            delete node->right;
-            node->right = parenthesis_data->next_parenthesis[letter]->tree.root;
-            node->right->data.is_parenthesis = true;
+        if (node->right) {
+            if (is_letter(node->right->data.value)) {
+                string letter = node->right->data.value;
+                delete node->right;
+                parenthesis_data->next_parenthesis[letter]->tree.root->data.is_parenthesis = true;
+                node->right = parenthesis_data->next_parenthesis[letter]->tree.root;
+            }
         }
         navigate_inside_tree(node->right, parenthesis_data);
     }

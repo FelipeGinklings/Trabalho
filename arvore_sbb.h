@@ -68,6 +68,17 @@ struct Operation {
         }
         throw invalid_argument("Unknown operation: " + operation);
     }
+
+    double apply(string a, double b) const {
+        if (operation == "+") return stod(a) + b;
+        if (operation == "-") return stod(a) - b;
+        if (operation == "*") return stod(a) * b;
+        if (operation == "/") {
+            if (b == 0) throw invalid_argument("Division by zero");
+            return stod(a) / b;
+        }
+        throw invalid_argument("Unknown operation: " + operation);
+    }
 };
 
 struct Data {
@@ -229,37 +240,39 @@ void in_order(Node<TYPE> *node) {
     }
 }
 
-void calculate_tree(Node<Data> *node, double &total, Operation operation, bool has_operation = false) {
+void calculate_tree(Node<Data> *node, vector<string> &operations) {
     if (node != nullptr) {
-        // auto op = Operation();
-        // if (node->data.is_parenthesis) {
-        //     double new_total = 0;
-        //     calculate_tree(node, total, operation);
-        //     node->data.value = new_total;
-        // }
-        // calculate_tree(node->left);
-        // if (!total)
-        //     total = stod(node->data.value);
-        // else if (node->data.operation)
-        //     op = Operation(node->data.value);
-        // else if (has_operation)
-        //     total = op.apply(total, node->data.value);
-        // calculate_tree(node->right);
+        if (node->data.is_parenthesis) {
+            node->data.is_parenthesis = false;
+            vector<string> new_operations;
+            calculate_tree(node, new_operations);
+            node->data.value = new_operations[0];
+            cout << "Parenthesis result: " << node->data.value << endl;
+            node->data.is_parenthesis = true;
+        } else
+            calculate_tree(node->left, operations);
+
+        operations.push_back(node->data.value);
+        if (operations.size() == 3) {
+            double left = stod(operations[0]);
+            Operation op = Operation(operations[1]);
+            double right = stod(operations[2]);
+            double result = op.apply(left, right);
+            cout << "Calculating: " << left << " " << op.operation << " " << right << " = " << result << endl;
+            operations.clear();
+            operations.push_back(to_string(result));
+        }
+        if (!node->data.is_parenthesis)
+            calculate_tree(node->right, operations);
+        else
+            node->data.is_parenthesis = false;
     }
 }
 
-void calculate_tree(Node<Data> *node) {
-    // if (node != nullptr) {
-    //     calculate_tree(node->left);
-
-    //     calculate_tree(node->right);
-    // }
-}
-
-void calculate_tree(AVLTree<Data> tree) {
-    // double total = 0;
-    // auto operation = Operation();
-    // calculate_tree(tree.root, total, operation);
+double calculate_tree(AVLTree<Data> tree) {
+    vector<string> operations;
+    calculate_tree(tree.root, operations);
+    return stod(operations[0]);
 }
 
 template <typename TYPE>
@@ -267,8 +280,8 @@ void print_tree(AVLTree<TYPE> t, bool withKey = false) {
     print_tree(t.root, withKey);
 }
 
-template <typename TYPE>
-void print_tree(Node<TYPE> *node, bool withKey, const string &prefix = "", bool isLeft = true) {
+// template <typename Data>
+void print_tree(Node<Data> *node, bool withKey, const string &prefix = "", bool isLeft = true) {
     if (node == nullptr) return;
 
     // Print current node
@@ -278,6 +291,8 @@ void print_tree(Node<TYPE> *node, bool withKey, const string &prefix = "", bool 
 
     if (withKey)
         cout << node->key << endl;
+    else if (node->data.is_parenthesis)
+        cout << "(" << node->data.value << ")" << endl;
     else
         cout << node->data << endl;
 
