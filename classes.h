@@ -134,6 +134,19 @@ struct ParenthesisData {
 
     ParenthesisData() { tree.root = nullptr; }
     ParenthesisData(const string &expr) : expression(expr) { tree.root = nullptr; }
+
+    void deleteAll() {
+        for (auto &pair : next_parenthesis) {
+            if (pair.second != nullptr) {
+                pair.second->deleteAll();
+                delete pair.second;
+                pair.second = nullptr;
+            }
+        }
+        next_parenthesis.clear();
+    }
+
+    ~ParenthesisData() { deleteAll(); }
 };
 
 struct ExpressionResult {

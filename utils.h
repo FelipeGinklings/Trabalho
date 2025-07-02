@@ -207,7 +207,9 @@ ExpressionResult organize_expression(const string &expression_str) {
     sregex_iterator iter(expression_str.begin(), expression_str.end(), pattern);
     sregex_iterator end;
 
-    for (; iter != end; ++iter) multiplications.push_back(iter->str());
+    for (; iter != end; ++iter) {
+        multiplications.push_back(iter->str());
+    }
 
     if (multiplications.empty()) return ExpressionResult("", "", expression_str);
 
@@ -218,8 +220,14 @@ ExpressionResult organize_expression(const string &expression_str) {
     }
 
     string multiplications_str = "";
-    for (const string &mul : multiplications) multiplications_str += mul;
-
+    if (multiplications.size() == 1) {
+        multiplications_str = multiplications[0];
+    } else {
+        for (size_t i = 0; i < multiplications.size(); ++i) {
+            if (i > 0) multiplications_str += "+";
+            multiplications_str += "(" + multiplications[i] + ")";
+        }
+    }
     bool start_with_plus = multiplications_str.length() > 0 && multiplications_str[0] == '+';
 
     if (sums_str == "") return ExpressionResult(start_with_plus ? multiplications_str.substr(1) : multiplications_str, "", "");
@@ -286,8 +294,9 @@ int create_sub_trees(ParenthesisData *&parenthesis_data, int key = 0, int depth 
     return key;
 }
 
-ParenthesisData *separate_by_parenthesis(const string &expression, const string &letter = "A", int multiplier = 1) {
-    ParenthesisData *new_data = new ParenthesisData();
+ParenthesisData *separate_by_parenthesis(const string &expression, ParenthesisData *parenthesis_data = nullptr, const string &letter = "A", int multiplier = 1) {
+    ParenthesisData *new_data = parenthesis_data;
+    if (new_data == nullptr) new_data = new ParenthesisData();
     string current_expression = "", next_letter = letter;
     int level = 0;
 
@@ -320,20 +329,25 @@ ParenthesisData *separate_by_parenthesis(const string &expression, const string 
     }
 
     if (!current_expression.empty()) new_data->expression += current_expression;
+    if (parenthesis_data != nullptr) return new_data;
     ExpressionResult new_organized_expression = organize_expression(new_data->expression);
-    new_data->expression = organized_operation_to_string(new_organized_expression);
+    string organized_operation_str = organized_operation_to_string(new_organized_expression);
+    if (organized_operation_str.find("(") != string::npos) {
+        new_data->deleteAll();
+        new_data = new ParenthesisData();
+        new_data = separate_by_parenthesis(organized_operation_str, new_data);
+        return new_data;
+    }
+    new_data->expression = organized_operation_str;
     return new_data;
 }
 
 bool is_mul(const string &value) { return value == "*" || value == "/"; }
+bool is_sum(const string &value) { return value == "+" || value == "-"; }
 
-void navigate_inside_tree(Node<Data> *&node, ParenthesisData *parenthesis_data) {
+void navigate_inside_tree(Node<Data> *&node, ParenthesisData *parenthesis_data, Node<Data> *saved = nullptr) {
     if (node != nullptr) {
-        if (is_mul(node->data.value)) {
-            cout << "Multiplication found: " << node->data.value << endl;
-            node->data.is_mul = true;
-        }
-        navigate_inside_tree(node->left, parenthesis_data);
+        navigate_inside_tree(node->left, parenthesis_data, saved);
         if (node->left) {
             if (is_letter(node->left->data.value)) {
                 string letter = node->left->data.value;
@@ -350,7 +364,7 @@ void navigate_inside_tree(Node<Data> *&node, ParenthesisData *parenthesis_data) 
                 node->right = parenthesis_data->next_parenthesis[letter]->tree.root;
             }
         }
-        navigate_inside_tree(node->right, parenthesis_data);
+        navigate_inside_tree(node->right, parenthesis_data, saved);
     }
 }
 

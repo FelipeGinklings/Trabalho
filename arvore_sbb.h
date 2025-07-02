@@ -24,14 +24,14 @@ void calculate_tree(Node<Data> *node, vector<string> &operations) {
             vector<string> new_operations;
             calculate_tree(node, new_operations);
             node->data.value = new_operations[0];
-            cout << "Parenthesis result: " << node->data.value << endl;
+            // cout << "Parenthesis result: " << node->data.value << endl;
             node->data.is_parenthesis = true;
         } else if (node->data.is_mul) {
             node->data.is_mul = false;
             vector<string> new_operations;
             calculate_tree(node, new_operations);
             node->data.value = new_operations[0];
-            cout << "Multiplication result: " << node->data.value << endl;
+            // cout << "Multiplication result: " << node->data.value << endl;
             node->data.is_mul = true;
         } else
             calculate_tree(node->left, operations);
@@ -42,7 +42,7 @@ void calculate_tree(Node<Data> *node, vector<string> &operations) {
             Operation op = Operation(operations[1]);
             double right = convert(operations[2]);
             double result = op.apply(left, right);
-            cout << "Calculating: " << left << " " << op.operation << " " << right << " = " << result << endl;
+            // cout << "Calculating: " << left << " " << op.operation << " " << right << " = " << result << endl;
             operations.clear();
             operations.push_back(to_string(result));
         }
